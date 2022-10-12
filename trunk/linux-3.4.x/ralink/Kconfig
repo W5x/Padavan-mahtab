@@ -346,6 +346,7 @@ menu "Wireless drivers common configs"
 source "drivers/net/wireless/ralink/Kconfig"
 endmenu
 endif
+endif
 
 endmenu
 

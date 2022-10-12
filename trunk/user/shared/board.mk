@@ -1,8 +1,9 @@
 ##################################################################
 # Board PID # Board Name       # PRODUCT # Note
 ##################################################################
-# SMARTBOX  # SMARTBOXTURBO      # MT7621  #
+# NEWIFI-D2 # LENOVO NEWIFI D2  # MT7621  #
 ##################################################################
 
-CFLAGS += -DBOARD_SMARTBOX
+# Must force use single mac mode.
+CFLAGS += -DBOARD_NEWIFID2 -DVENDOR_LENOVO
 BOARD_NUM_USB_PORTS=1

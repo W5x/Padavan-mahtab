@@ -22,7 +22,7 @@ config PCIE_PERST_ONLY
     bool
     default y
 
-config RT2880_DRAM_128M
+config RT2880_DRAM_512M
     bool
     default y
 
@@ -206,6 +206,14 @@ config CPU_HAS_SYNC
     bool
     default y
 
+config LONG_CALLS
+    bool
+    default y
+
+config HIGHMEM
+    bool
+    default y
+
 config CPU_SUPPORTS_HIGHMEM
     bool
     default y
@@ -215,6 +223,14 @@ config SYS_SUPPORTS_HIGHMEM
     default y
 
 config ARCH_FLATMEM_ENABLE
+    bool
+    default y
+
+config SELECT_MEMORY_MODEL
+    bool
+    default y
+
+config FLATMEM_MANUAL
     bool
     default y
 
@@ -251,10 +267,6 @@ config PAGECACHE_RECLAIM
     default y
 
 config VIRT_TO_BUS
-    bool
-    default y
-
-config PGTABLE_MAPPING
     bool
     default y
 
@@ -307,6 +319,10 @@ config STACKTRACE_SUPPORT
     default y
 
 config HAVE_IRQ_WORK
+    bool
+    default y
+
+config EXPERIMENTAL
     bool
     default y
 
@@ -790,6 +806,10 @@ config NF_CONNTRACK_SIP
     tristate
     default m
 
+config NETFILTER_TPROXY
+    tristate
+    default m
+
 config NETFILTER_XTABLES
     bool
     default y
@@ -838,6 +858,10 @@ config NETFILTER_XT_TARGET_NOTRACK
     tristate
     default m
 
+config NETFILTER_XT_TARGET_TPROXY
+    tristate
+    default m
+
 config NETFILTER_XT_TARGET_TCPMSS
     bool
     default y
@@ -863,8 +887,8 @@ config NETFILTER_XT_MATCH_DSCP
     default m
 
 config NETFILTER_XT_MATCH_ESP
-    tristate
-    default m
+    bool
+    default y
 
 config NETFILTER_XT_MATCH_HL
     tristate
@@ -1294,31 +1318,23 @@ config MTD_CFI_I2
     bool
     default y
 
-config MTD_NAND_ECC
-    bool
-    default y
-
-config MTD_NAND
-    bool
-    default y
-
-config MTD_NAND_IDS
-    bool
-    default y
-
-config MTD_UBI
-    bool
-    default y
-
 config MTD_RALINK
     bool
     default y
 
-config MTD_NAND_MTK
+config MTD_SPI_RALINK
     bool
     default y
 
-config RT2880_FLASH_AUTO
+config MTD_SPI_FAST_CLOCK
+    bool
+    default y
+
+config MTD_SPI_READ_NORM
+    bool
+    default y
+
+config RT2880_FLASH_32M
     bool
     default y
 
@@ -1327,10 +1343,6 @@ config RT2880_ROOTFS_IN_FLASH
     default y
 
 config ROOTFS_IN_FLASH_NO_PADDING
-    bool
-    default y
-
-config MTD_CONFIG_PART_BELOW
     bool
     default y
 
@@ -1379,6 +1391,18 @@ config NETDEVICES
     default y
 
 config MII
+    bool
+    default y
+
+config IFB
+    tristate
+    default m
+
+config IMQ
+    tristate
+    default m
+
+config IMQ_BEHAVIOR_AB
     bool
     default y
 
@@ -1622,6 +1646,34 @@ config USB_XHCI_PLATFORM
     bool
     default y
 
+config USB_EHCI_HCD
+    tristate
+    default m
+
+config USB_EHCI_ROOT_HUB_TT
+    bool
+    default y
+
+config USB_EHCI_TT_NEWSCHED
+    bool
+    default y
+
+config USB_OHCI_HCD
+    tristate
+    default m
+
+config USB_OHCI_HCD_PLATFORM
+    bool
+    default y
+
+config USB_EHCI_HCD_PLATFORM
+    bool
+    default y
+
+config USB_OHCI_LITTLE_ENDIAN
+    bool
+    default y
+
 config USB_STORAGE
     tristate
     default m
@@ -1746,11 +1798,7 @@ config EXFAT_FS
     tristate
     default m
 
-config EXFAT_VIRTUAL_XATTR
-    bool
-    default y
-
-config EXFAT_UEVENT
+config EXFAT_DISCARD
     bool
     default y
 
@@ -1786,27 +1834,11 @@ config MISC_FILESYSTEMS
     bool
     default y
 
-config UBIFS_FS
-    tristate
-    default m
-
-config UBIFS_FS_ADVANCED_COMPR
-    bool
-    default y
-
-config UBIFS_FS_LZO
-    bool
-    default y
-
 config SQUASHFS
     bool
     default y
 
 config SQUASHFS_XZ
-    bool
-    default y
-
-config SQUASHFS_4K_DEVBLK_SIZE
     bool
     default y
 
@@ -1998,6 +2030,10 @@ config CRYPTO_HMAC
     bool
     default y
 
+config CRYPTO_MD4
+    tristate
+    default m
+
 config CRYPTO_MD5
     tristate
     default m
@@ -2023,10 +2059,6 @@ config CRYPTO_DES
     default y
 
 config CRYPTO_DEFLATE
-    tristate
-    default m
-
-config CRYPTO_LZO
     tristate
     default m
 
@@ -2150,18 +2182,6 @@ config GE1_RGMII_FORCE_1000
     bool
     default y
 
-config RAETH_GMAC2
-    bool
-    default y
-
-config GE2_INTERNAL_GMAC_P5
-    bool
-    default y
-
-config RAETH_BOTH_GMAC
-    bool
-    default y
-
 config MT7530_GSW
     bool
     default y
@@ -2190,7 +2210,7 @@ config RT_FIRST_IF_EEPROM_FLASH
     bool
     default y
 
-config RT_SECOND_IF_MT7615E
+config RT_SECOND_IF_MT7612E
     bool
     default y
 
@@ -2202,13 +2222,45 @@ config RT_SECOND_IF_EEPROM_FLASH
     bool
     default y
 
-config RT_THIRD_IF_NONE
+config MT76X2_AP
+    tristate
+    default m
+
+config MT76X2_AP_LED_SOFT
+    bool
+    default y
+
+config MT76X2_AP_LLTD
+    bool
+    default y
+
+config MT76X2_AP_WDS
+    bool
+    default y
+
+config MT76X2_AP_MBSS
+    bool
+    default y
+
+config MT76X2_AP_MBSS_NEW_MBSSID_MODE
+    bool
+    default y
+
+config MT76X2_AP_APCLI
+    bool
+    default y
+
+config MT76X2_AP_80211AC_VHT
     bool
     default y
 
 config MT76X3_AP
     tristate
     default m
+
+config MT76X3_AP_LED_SOFT
+    bool
+    default y
 
 config MT76X3_AP_LLTD
     bool
@@ -2230,111 +2282,7 @@ config MT76X3_AP_SMART_CARRIER_SENSE
     bool
     default y
 
-config DOT11_N_SUPPORT
-    bool
-    default y
-
-config DOT11_VHT_AC
-    bool
-    default y
-
-config G_BAND_256QAM_SUPPORT
-    bool
-    default y
-
-config TPC_SUPPORT
-    bool
-    default y
-
-config BACKGROUND_SCAN_SUPPORT
-    bool
-    default y
-
-config MT7615_AP_SMART_CARRIER_SENSE
-    bool
-    default y
-
-config DOT11W_PMF_SUPPORT
-    bool
-    default y
-
-config MT7615_AP_TXBF
-    bool
-    default y
-
-config PRE_CAL_TRX_SET1_SUPPORT
-    bool
-    default y
-
-config PRE_CAL_TRX_SET2_SUPPORT
-    bool
-    default y
-
-config FIRST_IF_IPAILNA
-    bool
-    default y
-
-config SECOND_IF_IPAILNA
-    bool
-    default y
-
-config MT7615_AP
-    tristate
-    default m
-
-config MT7615_AP_LLTD
-    bool
-    default y
-
-config MT7615_AP_WDS
-    bool
-    default y
-
-config MT7615_AP_MBSS
-    bool
-    default y
-
-config MT7615_AP_APCLI
-    bool
-    default y
-
-config MT7615_AP_MAC_REPEATER
-    bool
-    default y
-
-config MUMIMO_SUPPORT
-    bool
-    default y
-
-config MU_RA_SUPPORT
-    bool
-    default y
-
-config DOT11R_FT_SUPPORT
-    bool
-    default y
-
-config DOT11K_RRM_SUPPORT
-    bool
-    default y
-
-config VOW_SUPPORT
-    bool
-    default y
-
-config BAND_STEERING
-    bool
-    default y
-
-config WLAN_HOOK
-    bool
-    default y
-
-config WNM_SUPPORT
-    bool
-    default y
-
-config RT_BAND_STEERING
+config RT_SINGLE_SKU
     bool
     default y
 
@@ -2355,10 +2303,6 @@ config RT_80211W_PMF
     default y
 
 config RT_IGMP_SNOOP
-    bool
-    default y
-
-config RT_MCAST_RATE_SPECIFIC
     bool
     default y
 

@@ -1235,6 +1235,7 @@ EGREP = /usr/bin/grep -E
 ETAGS = etags
 EXEEXT = 
 FGREP = /usr/bin/grep -F
+FILECMD = file
 GREP = /usr/bin/grep
 INSTALL = /usr/bin/install -c
 INSTALL_DATA = ${INSTALL} -m 644

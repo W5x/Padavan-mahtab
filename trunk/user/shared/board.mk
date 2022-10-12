@@ -1,8 +1,8 @@
 ##################################################################
 # Board PID # Board Name       # PRODUCT # Note
 ##################################################################
-# MI-R3PRO # Xiaomi R3PRO   # MT7621  #
+# SMARTBOX  # SMARTBOXTURBO      # MT7621  #
 ##################################################################
 
-CFLAGS += -DBOARD_MIR3PRO
+CFLAGS += -DBOARD_SMARTBOX
 BOARD_NUM_USB_PORTS=1

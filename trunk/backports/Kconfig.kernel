@@ -22,7 +22,7 @@ config PCIE_PERST_ONLY
     bool
     default y
 
-config RT2880_DRAM_512M
+config RT2880_DRAM_128M
     bool
     default y
 
@@ -203,14 +203,6 @@ config CPU_MIPSR2_IRQ_EI
     default y
 
 config CPU_HAS_SYNC
-    bool
-    default y
-
-config LONG_CALLS
-    bool
-    default y
-
-config HIGHMEM
     bool
     default y
 
@@ -2186,7 +2178,7 @@ config RAETH_READ_MAC_FROM_MTD
     bool
     default y
 
-config RT_FIRST_IF_MT7615E
+config RT_FIRST_IF_MT7603E
     bool
     default y
 
@@ -2210,6 +2202,34 @@ config RT_SECOND_IF_EEPROM_FLASH
     bool
     default y
 
+config RT_THIRD_IF_NONE
+    bool
+    default y
+
+config MT76X3_AP
+    tristate
+    default m
+
+config MT76X3_AP_LLTD
+    bool
+    default y
+
+config MT76X3_AP_WDS
+    bool
+    default y
+
+config MT76X3_AP_MBSS
+    bool
+    default y
+
+config MT76X3_AP_APCLI
+    bool
+    default y
+
+config MT76X3_AP_SMART_CARRIER_SENSE
+    bool
+    default y
+
 config DOT11_N_SUPPORT
     bool
     default y
@@ -2219,6 +2239,10 @@ config DOT11_VHT_AC
     default y
 
 config G_BAND_256QAM_SUPPORT
+    bool
+    default y
+
+config TPC_SUPPORT
     bool
     default y
 
@@ -2235,6 +2259,14 @@ config DOT11W_PMF_SUPPORT
     default y
 
 config MT7615_AP_TXBF
+    bool
+    default y
+
+config PRE_CAL_TRX_SET1_SUPPORT
+    bool
+    default y
+
+config PRE_CAL_TRX_SET2_SUPPORT
     bool
     default y
 
@@ -2291,6 +2323,10 @@ config VOW_SUPPORT
     default y
 
 config BAND_STEERING
+    bool
+    default y
+
+config WLAN_HOOK
     bool
     default y
 

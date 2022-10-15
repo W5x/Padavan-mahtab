@@ -210,10 +210,6 @@ config LONG_CALLS
     bool
     default y
 
-config HIGHMEM
-    bool
-    default y
-
 config CPU_SUPPORTS_HIGHMEM
     bool
     default y
@@ -323,10 +319,6 @@ config HAVE_IRQ_WORK
     default y
 
 config EXPERIMENTAL
-    bool
-    default y
-
-config SWAP
     bool
     default y
 
@@ -502,10 +494,6 @@ config PARTITION_ADVANCED
     bool
     default y
 
-config MAC_PARTITION
-    bool
-    default y
-
 config MSDOS_PARTITION
     bool
     default y
@@ -594,22 +582,6 @@ config UNIX
     bool
     default y
 
-config XFRM
-    bool
-    default y
-
-config XFRM_USER
-    tristate
-    default m
-
-config XFRM_IPCOMP
-    tristate
-    default m
-
-config NET_KEY
-    tristate
-    default m
-
 config INET
     bool
     default y
@@ -642,37 +614,9 @@ config SYN_COOKIES
     bool
     default y
 
-config INET_AH
-    tristate
-    default m
-
-config INET_ESP
-    tristate
-    default m
-
-config INET_IPCOMP
-    tristate
-    default m
-
-config INET_XFRM_TUNNEL
-    tristate
-    default m
-
 config INET_TUNNEL
     bool
     default y
-
-config INET_XFRM_MODE_TRANSPORT
-    bool
-    default y
-
-config INET_XFRM_MODE_TUNNEL
-    bool
-    default y
-
-config INET_XFRM_MODE_BEET
-    tristate
-    default m
 
 config TCP_CONG_CUBIC
     bool
@@ -690,38 +634,6 @@ config IPV6_ROUTER_PREF
     bool
     default y
 
-config INET6_AH
-    tristate
-    default m
-
-config INET6_ESP
-    tristate
-    default m
-
-config INET6_IPCOMP
-    tristate
-    default m
-
-config INET6_XFRM_TUNNEL
-    tristate
-    default m
-
-config INET6_TUNNEL
-    tristate
-    default m
-
-config INET6_XFRM_MODE_TRANSPORT
-    bool
-    default y
-
-config INET6_XFRM_MODE_TUNNEL
-    bool
-    default y
-
-config INET6_XFRM_MODE_BEET
-    tristate
-    default m
-
 config IPV6_SIT
     bool
     default y
@@ -731,10 +643,6 @@ config IPV6_SIT_6RD
     default y
 
 config IPV6_NDISC_NODETYPE
-    bool
-    default y
-
-config IPV6_MULTIPLE_TABLES
     bool
     default y
 
@@ -822,6 +730,10 @@ config NETFILTER_XT_CONNMARK
     bool
     default y
 
+config NETFILTER_XT_TARGET_CHECKSUM
+    tristate
+    default m
+
 config NETFILTER_XT_TARGET_CLASSIFY
     tristate
     default m
@@ -846,15 +758,15 @@ config NETFILTER_XT_TARGET_LOG
     bool
     default y
 
-config NETFILTER_XT_TARGET_IMQ
-    tristate
-    default m
-
 config NETFILTER_XT_TARGET_MARK
     tristate
     default m
 
 config NETFILTER_XT_TARGET_NOTRACK
+    tristate
+    default m
+
+config NETFILTER_XT_TARGET_TEE
     tristate
     default m
 
@@ -865,6 +777,10 @@ config NETFILTER_XT_TARGET_TPROXY
 config NETFILTER_XT_TARGET_TCPMSS
     bool
     default y
+
+config NETFILTER_XT_MATCH_COMMENT
+    tristate
+    default m
 
 config NETFILTER_XT_MATCH_CONNBYTES
     tristate
@@ -885,10 +801,6 @@ config NETFILTER_XT_MATCH_CONNTRACK
 config NETFILTER_XT_MATCH_DSCP
     tristate
     default m
-
-config NETFILTER_XT_MATCH_ESP
-    bool
-    default y
 
 config NETFILTER_XT_MATCH_HL
     tristate
@@ -918,7 +830,7 @@ config NETFILTER_XT_MATCH_MULTIPORT
     bool
     default y
 
-config NETFILTER_XT_MATCH_POLICY
+config NETFILTER_XT_MATCH_OWNER
     tristate
     default m
 
@@ -930,9 +842,21 @@ config NETFILTER_XT_MATCH_RECENT
     bool
     default y
 
+config NETFILTER_XT_MATCH_SCTP
+    tristate
+    default m
+
+config NETFILTER_XT_MATCH_SOCKET
+    tristate
+    default m
+
 config NETFILTER_XT_MATCH_STATE
     bool
     default y
+
+config NETFILTER_XT_MATCH_STRING
+    tristate
+    default m
 
 config NETFILTER_XT_MATCH_WEBSTR
     tristate
@@ -965,10 +889,6 @@ config IP_NF_IPTABLES
 config IP_NF_IPTABLES_SPEEDUP
     bool
     default y
-
-config IP_NF_MATCH_AH
-    tristate
-    default m
 
 config IP_NF_MATCH_TTL
     tristate
@@ -1050,10 +970,6 @@ config IP6_NF_IPTABLES
     bool
     default y
 
-config IP6_NF_MATCH_AH
-    tristate
-    default m
-
 config IP6_NF_TARGET_HL
     tristate
     default m
@@ -1074,7 +990,27 @@ config BRIDGE_NF_EBTABLES
     tristate
     default m
 
+config BRIDGE_EBT_BROUTE
+    tristate
+    default m
+
 config BRIDGE_EBT_T_FILTER
+    tristate
+    default m
+
+config BRIDGE_EBT_T_NAT
+    tristate
+    default m
+
+config BRIDGE_EBT_802_3
+    tristate
+    default m
+
+config BRIDGE_EBT_AMONG
+    tristate
+    default m
+
+config BRIDGE_EBT_ARP
     tristate
     default m
 
@@ -1082,7 +1018,59 @@ config BRIDGE_EBT_IP
     tristate
     default m
 
+config BRIDGE_EBT_IP6
+    tristate
+    default m
+
+config BRIDGE_EBT_LIMIT
+    tristate
+    default m
+
+config BRIDGE_EBT_MARK
+    tristate
+    default m
+
 config BRIDGE_EBT_PKTTYPE
+    tristate
+    default m
+
+config BRIDGE_EBT_STP
+    tristate
+    default m
+
+config BRIDGE_EBT_VLAN
+    tristate
+    default m
+
+config BRIDGE_EBT_ARPREPLY
+    tristate
+    default m
+
+config BRIDGE_EBT_DNAT
+    tristate
+    default m
+
+config BRIDGE_EBT_MARK_T
+    tristate
+    default m
+
+config BRIDGE_EBT_REDIRECT
+    tristate
+    default m
+
+config BRIDGE_EBT_SNAT
+    tristate
+    default m
+
+config BRIDGE_EBT_LOG
+    tristate
+    default m
+
+config BRIDGE_EBT_ULOG
+    tristate
+    default m
+
+config BRIDGE_EBT_NFLOG
     tristate
     default m
 
@@ -1123,110 +1111,6 @@ config VLAN_8021Q_DOUBLE_TAG
     default y
 
 config LLC
-    bool
-    default y
-
-config NET_SCHED
-    bool
-    default y
-
-config NET_SCH_HTB
-    tristate
-    default m
-
-config NET_SCH_HFSC
-    tristate
-    default m
-
-config NET_SCH_PRIO
-    tristate
-    default m
-
-config NET_SCH_RED
-    tristate
-    default m
-
-config NET_SCH_SFQ
-    tristate
-    default m
-
-config NET_SCH_GRED
-    tristate
-    default m
-
-config NET_SCH_DSMARK
-    tristate
-    default m
-
-config NET_SCH_INGRESS
-    tristate
-    default m
-
-config NET_SCH_CODEL
-    tristate
-    default m
-
-config NET_SCH_FQ_CODEL
-    tristate
-    default m
-
-config NET_CLS
-    bool
-    default y
-
-config NET_CLS_BASIC
-    tristate
-    default m
-
-config NET_CLS_TCINDEX
-    tristate
-    default m
-
-config NET_CLS_FW
-    tristate
-    default m
-
-config NET_CLS_U32
-    tristate
-    default m
-
-config CLS_U32_MARK
-    bool
-    default y
-
-config NET_CLS_FLOW
-    tristate
-    default m
-
-config NET_EMATCH
-    bool
-    default y
-
-config NET_EMATCH_CMP
-    tristate
-    default m
-
-config NET_EMATCH_NBYTE
-    tristate
-    default m
-
-config NET_EMATCH_U32
-    tristate
-    default m
-
-config NET_EMATCH_META
-    tristate
-    default m
-
-config NET_CLS_ACT
-    bool
-    default y
-
-config NET_ACT_MIRRED
-    tristate
-    default m
-
-config NET_SCH_FIFO
     bool
     default y
 
@@ -1279,8 +1163,8 @@ config STANDALONE
     default y
 
 config FW_LOADER
-    tristate
-    default m
+    bool
+    default y
 
 config FIRMWARE_IN_KERNEL
     bool
@@ -1394,18 +1278,6 @@ config MII
     bool
     default y
 
-config IFB
-    tristate
-    default m
-
-config IMQ
-    tristate
-    default m
-
-config IMQ_BEHAVIOR_AB
-    bool
-    default y
-
 config TUN
     bool
     default y
@@ -1441,14 +1313,6 @@ config PPP_ASYNC
 config PPP_SYNC_TTY
     bool
     default y
-
-config INPUT
-    tristate
-    default m
-
-config INPUT_EVDEV
-    tristate
-    default m
 
 config UNIX98_PTYS
     bool
@@ -1574,29 +1438,9 @@ config SND_USB_CAIAQ
     tristate
     default m
 
-config SND_USB_CAIAQ_INPUT
-    bool
-    default y
-
 config SND_USB_6FIRE
     tristate
     default m
-
-config HID_SUPPORT
-    bool
-    default y
-
-config HID
-    tristate
-    default m
-
-config USB_HID
-    tristate
-    default m
-
-config USB_HIDDEV
-    bool
-    default y
 
 config USB_ARCH_HAS_OHCI
     bool
@@ -1643,34 +1487,6 @@ config USB_XHCI_HCD
     default m
 
 config USB_XHCI_PLATFORM
-    bool
-    default y
-
-config USB_EHCI_HCD
-    tristate
-    default m
-
-config USB_EHCI_ROOT_HUB_TT
-    bool
-    default y
-
-config USB_EHCI_TT_NEWSCHED
-    bool
-    default y
-
-config USB_OHCI_HCD
-    tristate
-    default m
-
-config USB_OHCI_HCD_PLATFORM
-    bool
-    default y
-
-config USB_EHCI_HCD_PLATFORM
-    bool
-    default y
-
-config USB_OHCI_LITTLE_ENDIAN
     bool
     default y
 
@@ -1734,10 +1550,6 @@ config EXT4_FS
     tristate
     default m
 
-config EXT4_USE_FOR_EXT23
-    bool
-    default y
-
 config EXT4_FS_XATTR
     bool
     default y
@@ -1754,14 +1566,6 @@ config FS_MBCACHE
     tristate
     default m
 
-config XFS_FS
-    tristate
-    default m
-
-config EXPORTFS
-    tristate
-    default m
-
 config FILE_LOCKING
     bool
     default y
@@ -1775,8 +1579,8 @@ config INOTIFY_USER
     default y
 
 config FUSE_FS
-    tristate
-    default m
+    bool
+    default y
 
 config FSCACHE
     tristate
@@ -1846,50 +1650,6 @@ config SQUASHFS_EMBEDDED
     bool
     default y
 
-config NETWORK_FILESYSTEMS
-    bool
-    default y
-
-config NFS_FS
-    tristate
-    default m
-
-config NFS_V3
-    bool
-    default y
-
-config NFS_FSCACHE
-    bool
-    default y
-
-config NFSD
-    tristate
-    default m
-
-config NFSD_V3
-    bool
-    default y
-
-config LOCKD
-    tristate
-    default m
-
-config LOCKD_V4
-    bool
-    default y
-
-config NFS_COMMON
-    bool
-    default y
-
-config SUNRPC
-    tristate
-    default m
-
-config CIFS
-    tristate
-    default m
-
 config NLS
     bool
     default y
@@ -1899,6 +1659,10 @@ config NLS_CODEPAGE_437
     default y
 
 config NLS_CODEPAGE_866
+    bool
+    default y
+
+config NLS_CODEPAGE_936
     bool
     default y
 
@@ -1970,14 +1734,6 @@ config CRYPTO_ALGAPI2
     bool
     default y
 
-config CRYPTO_AEAD
-    bool
-    default y
-
-config CRYPTO_AEAD2
-    bool
-    default y
-
 config CRYPTO_BLKCIPHER
     bool
     default y
@@ -2014,19 +1770,7 @@ config CRYPTO_WORKQUEUE
     bool
     default y
 
-config CRYPTO_AUTHENC
-    bool
-    default y
-
-config CRYPTO_CBC
-    bool
-    default y
-
 config CRYPTO_ECB
-    bool
-    default y
-
-config CRYPTO_HMAC
     bool
     default y
 
@@ -2034,33 +1778,13 @@ config CRYPTO_MD4
     tristate
     default m
 
-config CRYPTO_MD5
-    tristate
-    default m
-
 config CRYPTO_SHA1
-    bool
-    default y
-
-config CRYPTO_SHA256
-    tristate
-    default m
-
-config CRYPTO_AES
     bool
     default y
 
 config CRYPTO_ARC4
     bool
     default y
-
-config CRYPTO_DES
-    bool
-    default y
-
-config CRYPTO_DEFLATE
-    tristate
-    default m
 
 config BITREVERSE
     bool
@@ -2105,6 +1829,22 @@ config ZLIB_DEFLATE
 config XZ_DEC
     bool
     default y
+
+config TEXTSEARCH
+    bool
+    default y
+
+config TEXTSEARCH_KMP
+    tristate
+    default m
+
+config TEXTSEARCH_BM
+    tristate
+    default m
+
+config TEXTSEARCH_FSM
+    tristate
+    default m
 
 config HAS_IOMEM
     bool
@@ -2222,13 +1962,13 @@ config RT_SECOND_IF_EEPROM_FLASH
     bool
     default y
 
+config RT_THIRD_IF_NONE
+    bool
+    default y
+
 config MT76X2_AP
     tristate
     default m
-
-config MT76X2_AP_LED_SOFT
-    bool
-    default y
 
 config MT76X2_AP_LLTD
     bool
@@ -2254,51 +1994,99 @@ config MT76X2_AP_80211AC_VHT
     bool
     default y
 
+config WIFI_DRIVER
+    bool
+    default y
+
+config MT7603E_RLT_WIFI
+    tristate
+    default m
+
+config MT7603E_MULTI_INF_SUPPORT
+    bool
+    default y
+
+config MT7603E_WIFI_BASIC_FUNC
+    bool
+    default y
+
+config MT7603E_DOT11N_DRAFT3
+    bool
+    default y
+
+config MT7603E_LLTD_SUPPORT
+    bool
+    default y
+
+config MT7603E_IGMP_SNOOP_SUPPORT
+    bool
+    default y
+
+config MT7603E_RATE_ADAPTION
+    bool
+    default y
+
+config MT7603E_NEW_RATE_ADAPT_SUPPORT
+    bool
+    default y
+
+config MT7603E_SMART_CARRIER_SENSE_SUPPORT
+    bool
+    default y
+
+config MT7603E_RTMP_FLASH_SUPPORT
+    bool
+    default y
+
+config MT7603E_RT2860V2_AP_V24_DATA_STRUCTURE
+    bool
+    default y
+
+config MT7603E_RTMP_PCI_SUPPORT
+    bool
+    default y
+
+config MT7603E_WIFI_MODE_AP
+    bool
+    default y
+
+config MT7603E_RLT_AP_SUPPORT
+    tristate
+    default m
+
 config MT76X3_AP
     tristate
     default m
 
-config MT76X3_AP_LED_SOFT
+config MT7603E_WDS_SUPPORT
     bool
     default y
 
-config MT76X3_AP_LLTD
+config MT7603E_MBSS_SUPPORT
     bool
     default y
 
-config MT76X3_AP_WDS
+config MT7603E_APCLI_SUPPORT
     bool
     default y
 
-config MT76X3_AP_MBSS
+config MT7603E_MAC_REPEATER_SUPPORT
     bool
     default y
 
-config MT76X3_AP_APCLI
+config MT7603E_NEW_BW2040_COEXIST_SUPPORT
     bool
     default y
 
-config MT76X3_AP_SMART_CARRIER_SENSE
+config MT7603E_RALINK_MT7603E
     bool
     default y
 
-config RT_SINGLE_SKU
-    bool
-    default y
-
-config RT_DOT11R_FT
-    bool
-    default y
-
-config RT_DOT11K_RRM
+config MT7603E_MT_MAC
     bool
     default y
 
 config RT_80211N_DRAFT3
-    bool
-    default y
-
-config RT_80211W_PMF
     bool
     default y
 

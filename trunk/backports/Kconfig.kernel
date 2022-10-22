@@ -1798,11 +1798,19 @@ config UBIFS_FS
     tristate
     default m
 
+config UBIFS_FS_XATTR
+    bool
+    default y
+
 config UBIFS_FS_ADVANCED_COMPR
     bool
     default y
 
 config UBIFS_FS_LZO
+    bool
+    default y
+
+config UBIFS_FS_ZLIB
     bool
     default y
 
@@ -2075,6 +2083,14 @@ config ZLIB_INFLATE
     default m
 
 config ZLIB_DEFLATE
+    tristate
+    default m
+
+config LZO_COMPRESS
+    tristate
+    default m
+
+config LZO_DECOMPRESS
     tristate
     default m
 

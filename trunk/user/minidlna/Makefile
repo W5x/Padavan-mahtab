@@ -1,4 +1,4 @@
-SRC_NAME=minidlna-git
+SRC_NAME=minidlna-1.3.2
 
 DLNA_CFLAGS  += -ffunction-sections -fdata-sections -fvisibility=hidden
 DLNA_CFLAGS  += -Os -Wall -g -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64

@@ -30,7 +30,7 @@ struct wbint_TransIDArray {
 struct wbint_userinfo {
 	const char *acct_name;/* [unique,charset(UTF8)] */
 	const char *full_name;/* [unique,charset(UTF8)] */
-	const char *homedir;/* [charset(UTF8),unique] */
+	const char *homedir;/* [unique,charset(UTF8)] */
 	const char *shell;/* [charset(UTF8),unique] */
 	uint64_t primary_gid;
 	struct dom_sid user_sid;
@@ -50,7 +50,7 @@ struct wbint_RidArray {
 struct wbint_Principal {
 	struct dom_sid sid;
 	enum lsa_SidType type;
-	const char *name;/* [unique,charset(UTF8)] */
+	const char *name;/* [charset(UTF8),unique] */
 }/* [public] */;
 
 struct wbint_Principals {
@@ -107,7 +107,7 @@ struct wbint_LookupSids {
 
 struct wbint_LookupName {
 	struct {
-		const char *domain;/* [ref,charset(UTF8)] */
+		const char *domain;/* [charset(UTF8),ref] */
 		const char *name;/* [charset(UTF8),ref] */
 		uint32_t flags;
 	} in;
@@ -123,7 +123,7 @@ struct wbint_LookupName {
 
 struct wbint_Sid2Uid {
 	struct {
-		const char *dom_name;/* [unique,charset(UTF8)] */
+		const char *dom_name;/* [charset(UTF8),unique] */
 		struct dom_sid *sid;/* [ref] */
 	} in;
 
@@ -312,7 +312,7 @@ struct wbint_LookupRids {
 	} in;
 
 	struct {
-		const char **domain_name;/* [ref,charset(UTF8)] */
+		const char **domain_name;/* [charset(UTF8),ref] */
 		struct wbint_Principals *names;/* [ref] */
 		NTSTATUS result;
 	} out;

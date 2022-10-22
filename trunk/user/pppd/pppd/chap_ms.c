@@ -94,25 +94,24 @@
 #include "pppcrypt.h"
 #include "magic.h"
 
-static const char rcsid[] = RCSID;
 
 
-static void	ascii2unicode __P((char[], int, u_char[]));
-static void	NTPasswordHash __P((u_char *, int, u_char[MD4_SIGNATURE_SIZE]));
-static void	ChallengeResponse __P((u_char *, u_char *, u_char[24]));
-static void	ChapMS_NT __P((u_char *, char *, int, u_char[24]));
-static void	ChapMS2_NT __P((u_char *, u_char[16], char *, char *, int,
-				u_char[24]));
+static void	ascii2unicode (char[], int, u_char[]);
+static void	NTPasswordHash (u_char *, int, u_char[MD4_SIGNATURE_SIZE]);
+static void	ChallengeResponse (u_char *, u_char *, u_char[24]);
+static void	ChapMS_NT (u_char *, char *, int, u_char[24]);
+static void	ChapMS2_NT (u_char *, u_char[16], char *, char *, int,
+				u_char[24]);
 static void	GenerateAuthenticatorResponsePlain
-			__P((char*, int, u_char[24], u_char[16], u_char *,
-			     char *, u_char[41]));
+			(char*, int, u_char[24], u_char[16], u_char *,
+			 char *, u_char[41]);
 #ifdef MSLANMAN
-static void	ChapMS_LANMan __P((u_char *, char *, int, u_char *));
+static void	ChapMS_LANMan (u_char *, char *, int, u_char *);
 #endif
 
 #ifdef MPPE
-static void	Set_Start_Key __P((u_char *, char *, int));
-static void	SetMasterKeys __P((char *, int, u_char[24], int));
+static void	Set_Start_Key (u_char *, char *, int);
+static void	SetMasterKeys (char *, int, u_char[24], int);
 #endif
 
 #ifdef MSLANMAN
@@ -312,7 +311,8 @@ chapms2_verify_response(int id, char *name,
 
 static void
 chapms_make_response(unsigned char *response, int id, char *our_name,
-		     unsigned char *challenge, char *secret, int secret_len)
+		     unsigned char *challenge, char *secret, int secret_len,
+		     unsigned char *private)
 {
 	challenge++;	/* skip length, should be 8 */
 	*response++ = MS_CHAP_RESPONSE_LEN;
@@ -343,12 +343,13 @@ chapms2_add_to_response_cache(int id, unsigned char *challenge,
 	memcpy(chapms2_response_cache[i].challenge, challenge, 16);
 	memcpy(chapms2_response_cache[i].response, response,
 	       MS_CHAP2_RESPONSE_LEN);
-	memcpy(chapms2_response_cache[i].auth_response, auth_response,
-	       MS_AUTH_RESPONSE_LENGTH);
-	i++;
-	if (i > chapms2_response_cache_size)
-		chapms2_response_cache_size = i;
-	chapms2_response_cache_next_index = i % CHAPMS2_MAX_RESPONSE_CACHE_SIZE;
+	memcpy(chapms2_response_cache[i].auth_response,
+	       auth_response, MS_AUTH_RESPONSE_LENGTH);
+	chapms2_response_cache_next_index =
+		(i + 1) % CHAPMS2_MAX_RESPONSE_CACHE_SIZE;
+	if (chapms2_response_cache_next_index > chapms2_response_cache_size)
+		chapms2_response_cache_size = chapms2_response_cache_next_index;
+	dbglog("added response cache entry %d", i);
 }
 
 static struct chapms2_response_cache_entry*
@@ -367,6 +368,7 @@ chapms2_find_in_response_cache(int id, unsigned char *challenge,
 			|| memcmp(auth_response,
 				  chapms2_response_cache[i].auth_response,
 				  MS_AUTH_RESPONSE_LENGTH) == 0)) {
+			dbglog("response found in cache (entry %d)", i);
 			return &chapms2_response_cache[i];
 		}
 	}
@@ -375,7 +377,8 @@ chapms2_find_in_response_cache(int id, unsigned char *challenge,
 
 static void
 chapms2_make_response(unsigned char *response, int id, char *our_name,
-		      unsigned char *challenge, char *secret, int secret_len)
+		      unsigned char *challenge, char *secret, int secret_len,
+		      unsigned char *private)
 {
 	const struct chapms2_response_cache_entry *cache_entry;
 	unsigned char auth_response[MS_AUTH_RESPONSE_LENGTH+1];
@@ -410,7 +413,7 @@ chapms2_check_success(int id, unsigned char *msg, int len)
 	msg += 2;
 	len -= 2;
 	if (len < MS_AUTH_RESPONSE_LENGTH
-	    || !chapms2_find_in_response_cache(id, NULL, msg)) {
+	    || !chapms2_find_in_response_cache(id, NULL /* challenge */, msg)) {
 		/* Authenticator Response did not match expected. */
 		error("MS-CHAPv2 mutual authentication failed.");
 		return 0;
@@ -961,17 +964,13 @@ set_mppe_enc_types(int policy, int types)
     /*
      * Disable undesirable encryption types.  Note that we don't ENABLE
      * any encryption types, to avoid overriding manual configuration.
-     *
-     * It seems that 56 bit keys are unsupported in MS-RADIUS (see RFC 2548)
      */
     switch(types) {
 	case MPPE_ENC_TYPES_RC4_40:
-	    ccp_wantoptions[0].mppe_128 = 0;	/* disable 128-bit */
-	    ccp_wantoptions[0].mppe_56 = 0;	/* disable 56-bit */
+	    ccp_wantoptions[0].mppe &= ~MPPE_OPT_128;	/* disable 128-bit */
 	    break;
 	case MPPE_ENC_TYPES_RC4_128:
-	    ccp_wantoptions[0].mppe_56 = 0;	/* disable 56-bit */
-	    ccp_wantoptions[0].mppe_40 = 0;	/* disable 40-bit */
+	    ccp_wantoptions[0].mppe &= ~MPPE_OPT_40;	/* disable 40-bit */
 	    break;
 	default:
 	    break;

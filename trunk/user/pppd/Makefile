@@ -1,34 +1,20 @@
 # PPP top-level Makefile for Linux.
 
-PPPD_DIR = $(ROOTDIR)/user/pppd
-INSTROOT = $(ROOTDIR)/romfs
-
-DESTDIR = $(INSTROOT)/usr
+DESTDIR = $(INSTROOT)/usr/local
 BINDIR = $(DESTDIR)/sbin
 INCDIR = $(DESTDIR)/include
 MANDIR = $(DESTDIR)/share/man
-ETCDIR = $(INSTROOT)/tmp/ppp
+ETCDIR = $(INSTROOT)/etc/ppp
 
 # uid 0 = root
 INSTALL= install
-CFLAGS += -ffunction-sections -fdata-sections
-LDFLAGS += -Wl,--gc-sections
-MFLAGS=$(if $(CONFIG_IPV6),HAVE_INET6=y,)
 
 all:
-	cd chat; $(MAKE) -j$(HOST_NCPU) COPTS="$(CFLAGS)" $(MFLAGS) all
-	cd pppd/plugins; $(MAKE) -j$(HOST_NCPU) COPTS="$(CFLAGS)" $(MFLAGS) all
-	cd pppd; $(MAKE) -j$(HOST_NCPU) COPTS="$(CFLAGS)" $(MFLAGS) all
-	cd pppstats; $(MAKE) -j$(HOST_NCPU) COPTS="$(CFLAGS)" $(MFLAGS) all
-	cd pppdump; $(MAKE) -j$(HOST_NCPU) COPTS="$(CFLAGS)" $(MFLAGS) all
-
-romfs:
-	cd pppd; $(MAKE) $(MFLAGS) all
+	cd chat; $(MAKE) $(MFLAGS) all
 	cd pppd/plugins; $(MAKE) $(MFLAGS) all
-	$(ROMFSINST) -d pppd/pppd /usr/sbin/pppd
-	$(ROMFSINST) -d pppd/plugins/rp-pppoe/rp-pppoe.so /usr/lib/pppd/rp-pppoe.so
-	$(ROMFSINST) -d pppd/plugins/pppol2tp/pppol2tp.so /usr/lib/pppd/pppol2tp.so
-	$(ROMFSINST) -d pppd/plugins/pptp/pptp.so /usr/lib/pppd/pptp.so
+	cd pppd; $(MAKE) $(MFLAGS) all
+	cd pppstats; $(MAKE) $(MFLAGS) all
+	cd pppdump; $(MAKE) $(MFLAGS) all
 
 install: $(BINDIR) $(MANDIR)/man8 install-progs install-devel
 
@@ -40,7 +26,7 @@ install-progs:
 	cd pppdump; $(MAKE) $(MFLAGS) install
 
 install-etcppp: $(ETCDIR) $(ETCDIR)/options $(ETCDIR)/pap-secrets \
-	$(ETCDIR)/chap-secrets
+	$(ETCDIR)/chap-secrets $(ETCDIR)/eaptls-server $(ETCDIR)/eaptls-client
 
 install-devel:
 	cd pppd; $(MAKE) $(MFLAGS) install-devel
@@ -51,6 +37,10 @@ $(ETCDIR)/pap-secrets:
 	$(INSTALL) -c -m 600 etc.ppp/pap-secrets $@
 $(ETCDIR)/chap-secrets:
 	$(INSTALL) -c -m 600 etc.ppp/chap-secrets $@
+$(ETCDIR)/eaptls-server:
+	$(INSTALL) -c -m 600 etc.ppp/eaptls-server $@
+$(ETCDIR)/eaptls-client:
+	$(INSTALL) -c -m 600 etc.ppp/eaptls-client $@
 
 $(BINDIR):
 	$(INSTALL) -d -m 755 $@

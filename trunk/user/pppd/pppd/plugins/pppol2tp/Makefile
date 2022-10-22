@@ -1,29 +1,27 @@
-COPTS	= -O2 -g
-CFLAGS	= $(COPTS) -I. -I../.. -I../../../include -fPIC
-LDFLAGS	+= -shared
-INSTALL	= install
-
 #***********************************************************************
+CROSS_COMPILE=
+CC=$(CROSS_COMPILE)cc
+COPTS=-O2 -g -pipe
 
-DESTDIR = /usr
+DESTDIR = $(INSTROOT)//usr/local
 LIBDIR = $(DESTDIR)/lib/pppd/$(VERSION)
 
 VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../../patchlevel.h)
 
-PLUGINS := pppol2tp.so openl2tp.so
+CFLAGS	= $(COPTS) -I. -I../.. -I../../../include -fPIC
+LDFLAGS_SHARED	= -shared
+INSTALL	= install
 
-ifdef HAVE_INET6
-CFLAGS   += -DINET6=1
-endif
+PLUGINS := pppol2tp.so openl2tp.so
 
 all: $(PLUGINS)
 
 %.so: %.o
-	$(CC) $(CFLAGS) -o $@ -shared $(LDFLAGS) $^ $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(LDFLAGS_SHARED) $^ $(LIBS)
 
 install: all
 	$(INSTALL) -d -m 755 $(LIBDIR)
-	$(INSTALL) -c -m 4550 $(PLUGINS) $(LIBDIR)
+	$(INSTALL) -c -m 755 $(PLUGINS) $(LIBDIR)
 
 clean:
 	rm -f *.o *.so

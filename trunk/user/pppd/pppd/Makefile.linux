@@ -1,7 +1,11 @@
 #
 # pppd makefile for Linux
-# $Id: Makefile.linux,v 1.70 2007/06/19 02:08:34 carlsonj Exp $
+# Processed by configure to produce pppd/Makefile
 #
+
+CROSS_COMPILE=@CROSS_COMPILE@
+CC=$(CROSS_COMPILE)@CC@
+COPTS=@CFLAGS@
 
 # Default installation locations
 DESTDIR = $(INSTROOT)@DESTDIR@
@@ -30,15 +34,12 @@ ifeq (.depend,$(wildcard .depend))
 include .depend
 endif
 
-# CC = gcc
-#
-COPTS = -O2 -pipe -Wall -g
-LIBS =
+LIBS = -lrt
 
-# Uncomment the next 2 lines to include support for Microsoft's
+# Uncomment the next line to include support for Microsoft's
 # MS-CHAP authentication protocol.  Also, edit plugins/radius/Makefile.linux.
 CHAPMS=y
-USE_CRYPT=y
+#USE_CRYPT=y
 # Don't use MSLANMAN unless you really know what you're doing.
 #MSLANMAN=y
 # Uncomment the next line to include support for MPPE.  CHAPMS (above) must
@@ -48,21 +49,26 @@ MPPE=y
 # Uncomment the next line to include support for PPP packet filtering.
 # This requires that the libpcap library and headers be installed
 # and that the kernel driver support PPP packet filtering.
-#FILTER=y
+FILTER=y
 
 # Uncomment the next line to enable multilink PPP (enabled by default)
 # Linux distributions: Please leave multilink ENABLED in your builds
 # of pppd!
-#HAVE_MULTILINK=y
+HAVE_MULTILINK=y
 
 # Uncomment the next line to enable the TDB database (enabled by default.)
 # If you enable multilink, then TDB is automatically enabled also.
 # Linux distributions: Please leave TDB ENABLED in your builds.
-#USE_TDB=y
+USE_TDB=y
 
-#HAS_SHADOW=y
+# Uncomment the next line to enable Type=notify services in systemd
+# If enabled, and the user sets the up_sdnotify option, then
+# pppd will not detach and will notify systemd when up.
+#SYSTEMD=y
+
+HAS_SHADOW=y
 #USE_PAM=y
-#HAVE_INET6=y
+HAVE_INET6=y
 
 # Enable plugins
 PLUGIN=y
@@ -73,14 +79,19 @@ PLUGIN=y
 # Enable EAP SRP-SHA1 authentication (requires libsrp)
 #USE_SRP=y
 
-# Use libutil
-#USE_LIBUTIL=y
+# Use libutil; test if logwtmp is declared in <utmp.h> to detect
+ifeq ($(shell echo '\#include <utmp.h>' | $(CC) -E - 2>/dev/null | grep -q logwtmp && echo yes),yes)
+USE_LIBUTIL=y
+endif
 
-#MAXOCTETS=y
+# Enable EAP-TLS authentication (requires MPPE support, libssl and libcrypto)
+USE_EAPTLS=y
+
+MAXOCTETS=y
 
 INCLUDE_DIRS= -I../include
 
-COMPILE_FLAGS= #-DHAVE_PATHS_H -DIPX_CHANGE -DHAVE_MMAP
+COMPILE_FLAGS= -DHAVE_PATHS_H -DIPX_CHANGE -DHAVE_MMAP -pipe
 
 CFLAGS= $(COPTS) $(COMPILE_FLAGS) $(INCLUDE_DIRS) '-DDESTDIR="@DESTDIR@"'
 
@@ -94,15 +105,17 @@ CFLAGS   += -DMSLANMAN=1
 endif
 ifdef MPPE
 CFLAGS   += -DMPPE=1
+HEADERS  += mppe.h
 endif
 endif
 
 # EAP SRP-SHA1
 ifdef USE_SRP
 CFLAGS	+= -DUSE_SRP -DOPENSSL -I/usr/local/ssl/include
-LIBS	+= -lsrp -L/usr/local/ssl/lib -lcrypto
+LIBS	+= -lsrp -L/usr/local/ssl/lib
+NEEDCRYPTOLIB = y
 TARGETS	+= srp-entry
-EXTRAINSTALL = $(INSTALL) -s -c -m 555 srp-entry $(BINDIR)/srp-entry
+EXTRAINSTALL = $(INSTALL) -c -m 555 srp-entry $(BINDIR)/srp-entry
 MANPAGES += srp-entry.8
 EXTRACLEAN += srp-entry.o
 NEEDDES=y
@@ -115,15 +128,25 @@ HEADERS += sha1.h
 PPPDOBJS += sha1.o
 endif
 
+# EAP-TLS
+ifdef USE_EAPTLS
+CFLAGS += -DUSE_EAPTLS=1
+LIBS += -lssl
+NEEDCRYPTOLIB = y
+PPPDSRC += eap-tls.c
+HEADERS += eap-tls.h
+PPPDOBJS += eap-tls.o
+endif
+
 ifdef HAS_SHADOW
 CFLAGS   += -DHAS_SHADOW
 #LIBS     += -lshadow $(LIBS)
 endif
 
-#ifneq ($(wildcard /usr/include/crypt.h),)
+ifeq ($(shell echo '\#include <crypt.h>' | $(CC) -E - >/dev/null 2>&1 && echo yes),yes)
 CFLAGS  += -DHAVE_CRYPT_H=1
 LIBS	+= -lcrypt
-#endif
+endif
 
 ifdef USE_LIBUTIL
 CFLAGS	+= -DHAVE_LOGWTMP=1
@@ -132,12 +155,17 @@ endif
 
 ifdef NEEDDES
 ifndef USE_CRYPT
-LIBS     += -ldes $(LIBS)
+CFLAGS   += -I$(shell $(CC) --print-sysroot)/usr/include/openssl
+NEEDCRYPTOLIB = y
 else
 CFLAGS   += -DUSE_CRYPT=1
 endif
 PPPDOBJS += pppcrypt.o
 HEADERS += pppcrypt.h
+endif
+
+ifdef NEEDCRYPTOLIB
+LIBS     += -lcrypto
 endif
 
 # For "Pluggable Authentication Modules", see ftp.redhat.com:/pub/pam/.
@@ -170,17 +198,20 @@ LIBS     += -llock
 CFLAGS   += -DLOCKLIB=1
 endif
 
+ifdef SYSTEMD
+LIBS += -lsystemd
+CFLAGS   += -DSYSTEMD=1
+endif
+
 ifdef PLUGIN
 CFLAGS	+= -DPLUGIN
-LDFLAGS	+= -Wl,-E
+LDFLAGS_PLUGIN	+= -Wl,-E
 LIBS	+= -ldl
 endif
 
 ifdef FILTER
-ifneq ($(wildcard /usr/include/pcap-bpf.h),)
 LIBS    += -lpcap
 CFLAGS  += -DPPP_FILTER
-endif
 endif
 
 ifdef HAVE_INET6
@@ -208,13 +239,13 @@ all: $(TARGETS)
 install: pppd
 	mkdir -p $(BINDIR) $(MANDIR)
 	$(EXTRAINSTALL)
-	$(INSTALL) -s -c -m 555 pppd $(BINDIR)/pppd
+	$(INSTALL) -c -m 555 pppd $(BINDIR)/pppd
 	if chgrp pppusers $(BINDIR)/pppd 2>/dev/null; then \
 	  chmod o-rx,u+s $(BINDIR)/pppd; fi
 	$(INSTALL) -c -m 444 pppd.8 $(MANDIR)
 
 pppd: $(PPPDOBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o pppd $(PPPDOBJS) $(LIBS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(LDFLAGS_PLUGIN) -o pppd $(PPPDOBJS) $(LIBS)
 
 srp-entry:	srp-entry.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ srp-entry.c $(LIBS)

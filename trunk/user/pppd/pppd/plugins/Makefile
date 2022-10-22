@@ -1,17 +1,22 @@
-COPTS	= -O2 -g
-CFLAGS	= $(COPTS) -I.. -I../../include -fPIC
-LDFLAGS	+= -shared
-INSTALL	= install
+CROSS_COMPILE=
+CC=$(CROSS_COMPILE)cc
+COPTS=-O2 -g -pipe
 
-DESTDIR = $(INSTROOT)/usr
+DESTDIR = $(INSTROOT)/usr/local
 BINDIR = $(DESTDIR)/sbin
 MANDIR = $(DESTDIR)/share/man/man8
 LIBDIR = $(DESTDIR)/lib/pppd/$(VERSION)
 
-SUBDIRS := rp-pppoe pppol2tp pptp
+CFLAGS	= $(COPTS) -I.. -I../../include -fPIC
+LDFLAGS_SHARED	= -shared
+INSTALL	= install
+
+# EAP-TLS
+CFLAGS += -DUSE_EAPTLS=1
+
+SUBDIRS := pppoe pppoatm pppol2tp
 # Uncomment the next line to include the radius authentication plugin
-#SUBDIRS += pppoatm
-#SUBDIRS += radius
+SUBDIRS += radius
 PLUGINS := minconn.so passprompt.so passwordfd.so winbind.so
 
 # This setting should match the one in ../Makefile.linux
@@ -27,22 +32,22 @@ include .depend
 endif
 
 all:	$(PLUGINS)
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d all; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d all || exit $$?; done
 
 %.so: %.c
-	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $^
+	$(CC) -o $@ $(LDFLAGS) $(LDFLAGS_SHARED) $(CFLAGS) $^
 
 VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../patchlevel.h)
 
 install: $(PLUGINS)
 	$(INSTALL) -d $(LIBDIR)
 	$(INSTALL) $? $(LIBDIR)
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d install; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d install || exit $$?; done
 
 clean:
 	rm -f *.o *.so *.a
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d clean; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d clean || exit $$?; done
 
 depend:
 	$(CPP) -M $(CFLAGS) *.c >.depend
-	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d depend; done
+	for d in $(SUBDIRS); do $(MAKE) $(MFLAGS) -C $$d depend || exit $$?; done

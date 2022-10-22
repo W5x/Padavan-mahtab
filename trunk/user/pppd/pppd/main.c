@@ -39,7 +39,7 @@
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Copyright (c) 1999-2004 Paul Mackerras. All rights reserved.
+ * Copyright (c) 1999-2020 Paul Mackerras. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,8 +66,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RCSID	"$Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp $"
-
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -89,7 +87,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/sysinfo.h>
 
 #include "pppd.h"
 #include "magic.h"
@@ -121,10 +118,9 @@
 #include "atcp.h"
 #endif
 
-static const char rcsid[] = RCSID;
 
 /* interface vars */
-char ifname[32];		/* Interface name */
+char ifname[MAXIFNAMELEN];	/* Interface name */
 int ifunit;			/* Interface unit number */
 
 struct channel *the_channel;
@@ -159,10 +155,10 @@ TDB_CONTEXT *pppdb;		/* database for storing status etc. */
 
 char db_key[32];
 
-int (*holdoff_hook) __P((void)) = NULL;
-int (*new_phase_hook) __P((int)) = NULL;
-void (*snoop_recv_hook) __P((unsigned char *p, int len)) = NULL;
-void (*snoop_send_hook) __P((unsigned char *p, int len)) = NULL;
+int (*holdoff_hook)(void) = NULL;
+int (*new_phase_hook)(int) = NULL;
+void (*snoop_recv_hook)(unsigned char *p, int len) = NULL;
+void (*snoop_send_hook)(unsigned char *p, int len) = NULL;
 
 static int conn_running;	/* we have a [dis]connector running */
 static int fd_loop;		/* fd for getting demand-dial packets */
@@ -218,7 +214,7 @@ bool bundle_terminating;
 struct subprocess {
     pid_t	pid;
     char	*prog;
-    void	(*done) __P((void *));
+    void	(*done)(void *);
     void	*arg;
     int		killable;
     struct subprocess *next;
@@ -228,48 +224,37 @@ static struct subprocess *children;
 
 /* Prototypes for procedures local to this file. */
 
-static void check_time(void);
-static void setup_signals __P((void));
-static void create_pidfile __P((int pid));
-static void create_linkpidfile __P((int pid));
-static void cleanup __P((void));
-static void get_input __P((void));
-static void calltimeout __P((void));
-static struct timeval *timeleft __P((struct timeval *));
-static void kill_my_pg __P((int));
-static void hup __P((int));
-static void term __P((int));
-static void chld __P((int));
-static void toggle_debug __P((int));
-static void open_ccp __P((int));
-static void bad_signal __P((int));
-static void holdoff_end __P((void *));
-static void forget_child __P((int pid, int status));
-static int reap_kids __P((void));
-static void childwait_end __P((void *));
+static void setup_signals(void);
+static void create_pidfile(int pid);
+static void create_linkpidfile(int pid);
+static void cleanup(void);
+static void get_input(void);
+static void calltimeout(void);
+static struct timeval *timeleft(struct timeval *);
+static void kill_my_pg(int);
+static void hup(int);
+static void term(int);
+static void chld(int);
+static void toggle_debug(int);
+static void open_ccp(int);
+static void bad_signal(int);
+static void holdoff_end(void *);
+static void forget_child(int pid, int status);
+static int reap_kids(void);
+static void childwait_end(void *);
 
 #ifdef USE_TDB
-static void update_db_entry __P((void));
-static void add_db_key __P((const char *));
-static void delete_db_key __P((const char *));
-static void cleanup_db __P((void));
+static void update_db_entry(void);
+static void add_db_key(const char *);
+static void delete_db_key(const char *);
+static void cleanup_db(void);
 #endif
 
-static void handle_events __P((void));
-void print_link_stats __P((void));
+static void handle_events(void);
+void print_link_stats(void);
 
-extern	char	*ttyname __P((int));
-extern	char	*getlogin __P((void));
-int main __P((int, char *[]));
-
-#ifdef ultrix
-#undef	O_NONBLOCK
-#define	O_NONBLOCK	O_NDELAY
-#endif
-
-#ifdef ULTRIX
-#define setlogmask(x)
-#endif
+extern	char	*getlogin(void);
+int main(int, char *[]);
 
 /*
  * PPP Data Link Layer "protocol" table.
@@ -299,23 +284,17 @@ struct protent *protocols[] = {
     NULL
 };
 
-/*
- * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
- */
-#if !defined(PPP_DRV_NAME)
-#define PPP_DRV_NAME	"ppp"
-#endif /* !defined(PPP_DRV_NAME) */
-
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     int i, t;
     char *p;
     struct passwd *pw;
     struct protent *protp;
     char numbuf[16];
+
+    strlcpy(path_ipup, _PATH_IPUP, sizeof(path_ipup));
+    strlcpy(path_ipdown, _PATH_IPDOWN, sizeof(path_ipdown));
 
     link_stats_valid = 0;
     new_phase(PHASE_INITIALIZE);
@@ -432,13 +411,6 @@ main(argc, argv)
     }
 
     /*
-     * pppd sends signals to the whole process group, so it must always
-     * create a new one or it may kill the parent process and its siblings.
-     */
-    setsid();
-    chdir("/");
-
-    /*
      * Initialize system-dependent stuff.
      */
     sys_init();
@@ -538,8 +510,7 @@ main(argc, argv)
 	    info("Starting link");
 	}
 
-	check_time();
-	gettimeofday(&start_time, NULL);
+	get_time(&start_time);
 	script_unsetenv("CONNECT_TIME");
 	script_unsetenv("BYTES_SENT");
 	script_unsetenv("BYTES_RCVD");
@@ -613,7 +584,7 @@ main(argc, argv)
  * handle_events - wait for something to happen and respond to it.
  */
 static void
-handle_events()
+handle_events(void)
 {
     struct timeval timo;
     unsigned char buf[16];
@@ -661,7 +632,7 @@ handle_events()
  * setup_signals - initialize signal handling.
  */
 static void
-setup_signals()
+setup_signals(void)
 {
     struct sigaction sa;
 
@@ -753,12 +724,18 @@ setup_signals()
  * unit we are using.
  */
 void
-set_ifunit(iskey)
-    int iskey;
+set_ifunit(int iskey)
 {
-    info("Using interface %s%d", PPP_DRV_NAME, ifunit);
-    slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
+    char ifkey[32];
+
+    if (req_ifname[0] != '\0')
+	slprintf(ifname, sizeof(ifname), "%s", req_ifname);
+    else
+	slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
+    info("Using interface %s", ifname);
     script_setenv("IFNAME", ifname, iskey);
+    slprintf(ifkey, sizeof(ifkey), "%d", ifunit);
+    script_setenv("UNIT", ifkey, iskey);
     if (iskey) {
 	create_pidfile(getpid());	/* write pid to file */
 	create_linkpidfile(getpid());
@@ -769,7 +746,7 @@ set_ifunit(iskey)
  * detach - detach us from the controlling terminal.
  */
 void
-detach()
+detach(void)
 {
     int pid;
     char numbuf[16];
@@ -789,10 +766,11 @@ detach()
 	/* update pid files if they have been written already */
 	if (pidfilename[0])
 	    create_pidfile(pid);
-	if (linkpidfile[0])
-	    create_linkpidfile(pid);
+	create_linkpidfile(pid);
 	exit(0);		/* parent dies */
     }
+    setsid();
+    chdir("/");
     dup2(fd_devnull, 0);
     dup2(fd_devnull, 1);
     dup2(fd_devnull, 2);
@@ -812,7 +790,7 @@ detach()
  * reopen_log - (re)open our connection to syslog.
  */
 void
-reopen_log()
+reopen_log(void)
 {
     openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
     setlogmask(LOG_UPTO(LOG_INFO));
@@ -822,8 +800,7 @@ reopen_log()
  * Create a file containing our process ID.
  */
 static void
-create_pidfile(pid)
-    int pid;
+create_pidfile(int pid)
 {
     FILE *pidfile;
 
@@ -839,8 +816,7 @@ create_pidfile(pid)
 }
 
 void
-create_linkpidfile(pid)
-    int pid;
+create_linkpidfile(int pid)
 {
     FILE *pidfile;
 
@@ -863,14 +839,11 @@ create_linkpidfile(pid)
 /*
  * remove_pidfile - remove our pid files
  */
-void remove_pidfiles(keep_linkpid)
-    int keep_linkpid;
+void remove_pidfiles(void)
 {
     if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT)
 	warn("unable to delete pid file %s: %m", pidfilename);
     pidfilename[0] = 0;
-    if (keep_linkpid)
-	return;
     if (linkpidfile[0] != 0 && unlink(linkpidfile) < 0 && errno != ENOENT)
 	warn("unable to delete pid file %s: %m", linkpidfile);
     linkpidfile[0] = 0;
@@ -880,8 +853,7 @@ void remove_pidfiles(keep_linkpid)
  * holdoff_end - called via a timeout when the holdoff period ends.
  */
 static void
-holdoff_end(arg)
-    void *arg;
+holdoff_end(void *arg)
 {
     new_phase(PHASE_DORMANT);
 }
@@ -892,17 +864,14 @@ struct protocol_list {
     const char	*name;
 } protocol_list[] = {
     { 0x21,	"IP" },
-#if 0
     { 0x23,	"OSI Network Layer" },
     { 0x25,	"Xerox NS IDP" },
     { 0x27,	"DECnet Phase IV" },
-#endif
     { 0x29,	"Appletalk" },
     { 0x2b,	"Novell IPX" },
     { 0x2d,	"VJ compressed TCP/IP" },
     { 0x2f,	"VJ uncompressed TCP/IP" },
     { 0x31,	"Bridging PDU" },
-#if 0
     { 0x33,	"Stream Protocol ST-II" },
     { 0x35,	"Banyan Vines" },
     { 0x39,	"AppleTalk EDDP" },
@@ -916,11 +885,8 @@ struct protocol_list {
     { 0x49,	"Serial Data Transport Protocol (PPP-SDTP)" },
     { 0x4b,	"SNA over 802.2" },
     { 0x4d,	"SNA" },
-#endif
     { 0x4f,	"IP6 Header Compression" },
-#if 0
     { 0x51,	"KNX Bridging Data" },
-#endif
     { 0x53,	"Encryption" },
     { 0x55,	"Individual Link Encryption" },
     { 0x57,	"IPv6" },
@@ -931,15 +897,12 @@ struct protocol_list {
     { 0x65,	"RTP IPHC Compressed non-TCP" },
     { 0x67,	"RTP IPHC Compressed UDP 8" },
     { 0x69,	"RTP IPHC Compressed RTP 8" },
-#if 0
     { 0x6f,	"Stampede Bridging" },
     { 0x73,	"MP+" },
     { 0xc1,	"NTCITS IPI" },
-#endif
     { 0xfb,	"single-link compression" },
     { 0xfd,	"Compressed Datagram" },
     { 0x0201,	"802.1d Hello Packets" },
-#if 0
     { 0x0203,	"IBM Source Routing BPDU" },
     { 0x0205,	"DEC LANBridge100 Spanning Tree" },
     { 0x0207,	"Cisco Discovery Protocol" },
@@ -951,19 +914,15 @@ struct protocol_list {
     { 0x0231,	"Luxcom" },
     { 0x0233,	"Sigma Network Systems" },
     { 0x0235,	"Apple Client Server Protocol" },
-#endif
     { 0x0281,	"MPLS Unicast" },
     { 0x0283,	"MPLS Multicast" },
-#if 0
     { 0x0285,	"IEEE p1284.4 standard - data packets" },
     { 0x0287,	"ETSI TETRA Network Protocol Type 1" },
-#endif
     { 0x0289,	"Multichannel Flow Treatment Protocol" },
     { 0x2063,	"RTP IPHC Compressed TCP No Delta" },
     { 0x2065,	"RTP IPHC Context State" },
     { 0x2067,	"RTP IPHC Compressed UDP 16" },
     { 0x2069,	"RTP IPHC Compressed RTP 16" },
-#if 0
     { 0x4001,	"Cray Communications Control Protocol" },
     { 0x4003,	"CDPD Mobile Network Registration Protocol" },
     { 0x4005,	"Expand accelerator protocol" },
@@ -974,23 +933,17 @@ struct protocol_list {
     { 0x4023,	"RefTek Protocol" },
     { 0x4025,	"Fibre Channel" },
     { 0x4027,	"EMIT Protocols" },
-#endif
     { 0x405b,	"Vendor-Specific Protocol (VSP)" },
     { 0x8021,	"Internet Protocol Control Protocol" },
-#if 0
     { 0x8023,	"OSI Network Layer Control Protocol" },
     { 0x8025,	"Xerox NS IDP Control Protocol" },
     { 0x8027,	"DECnet Phase IV Control Protocol" },
-#endif
     { 0x8029,	"Appletalk Control Protocol" },
     { 0x802b,	"Novell IPX Control Protocol" },
-#if 0
     { 0x8031,	"Bridging NCP" },
     { 0x8033,	"Stream Protocol Control Protocol" },
     { 0x8035,	"Banyan Vines Control Protocol" },
-#endif
     { 0x803d,	"Multi-Link Control Protocol" },
-#if 0
     { 0x803f,	"NETBIOS Framing Control Protocol" },
     { 0x8041,	"Cisco Systems Control Protocol" },
     { 0x8043,	"Ascom Timeplex" },
@@ -999,24 +952,18 @@ struct protocol_list {
     { 0x8049,	"Serial Data Control Protocol (PPP-SDCP)" },
     { 0x804b,	"SNA over 802.2 Control Protocol" },
     { 0x804d,	"SNA Control Protocol" },
-#endif
     { 0x804f,	"IP6 Header Compression Control Protocol" },
-#if 0
     { 0x8051,	"KNX Bridging Control Protocol" },
-#endif
     { 0x8053,	"Encryption Control Protocol" },
     { 0x8055,	"Individual Link Encryption Control Protocol" },
     { 0x8057,	"IPv6 Control Protocol" },
     { 0x8059,	"PPP Muxing Control Protocol" },
     { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
-#if 0
     { 0x806f,	"Stampede Bridging Control Protocol" },
     { 0x8073,	"MP+ Control Protocol" },
     { 0x80c1,	"NTCITS IPI Control Protocol" },
-#endif
     { 0x80fb,	"Single Link Compression Control Protocol" },
     { 0x80fd,	"Compression Control Protocol" },
-#if 0
     { 0x8207,	"Cisco Discovery Protocol Control" },
     { 0x8209,	"Netcs Twin Routing" },
     { 0x820b,	"STP - Control Protocol" },
@@ -1025,29 +972,24 @@ struct protocol_list {
     { 0x8281,	"MPLSCP" },
     { 0x8285,	"IEEE p1284.4 standard - Protocol Control" },
     { 0x8287,	"ETSI TETRA TNP1 Control Protocol" },
-#endif
     { 0x8289,	"Multichannel Flow Treatment Protocol" },
     { 0xc021,	"Link Control Protocol" },
     { 0xc023,	"Password Authentication Protocol" },
     { 0xc025,	"Link Quality Report" },
-#if 0
     { 0xc027,	"Shiva Password Authentication Protocol" },
     { 0xc029,	"CallBack Control Protocol (CBCP)" },
     { 0xc02b,	"BACP Bandwidth Allocation Control Protocol" },
     { 0xc02d,	"BAP" },
-#endif
     { 0xc05b,	"Vendor-Specific Authentication Protocol (VSAP)" },
     { 0xc081,	"Container Control Protocol" },
     { 0xc223,	"Challenge Handshake Authentication Protocol" },
     { 0xc225,	"RSA Authentication Protocol" },
     { 0xc227,	"Extensible Authentication Protocol" },
-#if 0
     { 0xc229,	"Mitsubishi Security Info Exch Ptcl (SIEP)" },
     { 0xc26f,	"Stampede Bridging Authorization Protocol" },
     { 0xc281,	"Proprietary Authentication Protocol" },
     { 0xc283,	"Proprietary Authentication Protocol" },
     { 0xc481,	"Proprietary Node ID Authentication Protocol" },
-#endif
     { 0,	NULL },
 };
 
@@ -1055,8 +997,7 @@ struct protocol_list {
  * protocol_name - find a name for a PPP protocol.
  */
 const char *
-protocol_name(proto)
-    int proto;
+protocol_name(int proto)
 {
     struct protocol_list *lp;
 
@@ -1070,7 +1011,7 @@ protocol_name(proto)
  * get_input - called when incoming data is available.
  */
 static void
-get_input()
+get_input(void)
 {
     int len, i;
     u_char *p;
@@ -1162,10 +1103,7 @@ get_input()
  * itself), otherwise 0.
  */
 int
-ppp_send_config(unit, mtu, accm, pcomp, accomp)
-    int unit, mtu;
-    u_int32_t accm;
-    int pcomp, accomp;
+ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp)
 {
 	int errs;
 
@@ -1183,10 +1121,7 @@ ppp_send_config(unit, mtu, accm, pcomp, accomp)
  * itself), otherwise 0.
  */
 int
-ppp_recv_config(unit, mru, accm, pcomp, accomp)
-    int unit, mru;
-    u_int32_t accm;
-    int pcomp, accomp;
+ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp)
 {
 	int errs;
 
@@ -1201,8 +1136,7 @@ ppp_recv_config(unit, mru, accm, pcomp, accomp)
  * new_phase - signal the start of a new phase of pppd's operation.
  */
 void
-new_phase(p)
-    int p;
+new_phase(int p)
 {
     phase = p;
     if (new_phase_hook)
@@ -1214,8 +1148,7 @@ new_phase(p)
  * die - clean up state and exit with the specified status.
  */
 void
-die(status)
-    int status;
+die(int status)
 {
     if (!doing_multilink || multilink_master)
 	print_link_stats();
@@ -1230,7 +1163,7 @@ die(status)
  */
 /* ARGSUSED */
 static void
-cleanup()
+cleanup(void)
 {
     sys_cleanup();
 
@@ -1238,7 +1171,7 @@ cleanup()
 	the_channel->disestablish_ppp(devfd);
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
-    remove_pidfiles(0);
+    remove_pidfiles();
 
 #ifdef USE_TDB
     if (pppdb != NULL)
@@ -1248,7 +1181,7 @@ cleanup()
 }
 
 void
-print_link_stats()
+print_link_stats(void)
 {
     /*
      * Print connect time and statistics.
@@ -1266,26 +1199,24 @@ print_link_stats()
  * reset_link_stats - "reset" stats when link goes up.
  */
 void
-reset_link_stats(u)
-    int u;
+reset_link_stats(int u)
 {
     if (!get_ppp_stats(u, &old_link_stats))
 	return;
-    gettimeofday(&start_time, NULL);
+    get_time(&start_time);
 }
 
 /*
  * update_link_stats - get stats at link termination.
  */
 void
-update_link_stats(u)
-    int u;
+update_link_stats(int u)
 {
     struct timeval now;
     char numbuf[32];
 
     if (!get_ppp_stats(u, &link_stats)
-	|| gettimeofday(&now, NULL) < 0)
+	|| get_time(&now) < 0)
 	return;
     link_connect_time = now.tv_sec - start_time.tv_sec;
     link_stats_valid = 1;
@@ -1307,51 +1238,18 @@ update_link_stats(u)
 struct	callout {
     struct timeval	c_time;		/* time at which to call routine */
     void		*c_arg;		/* argument to routine */
-    void		(*c_func) __P((void *)); /* routine */
+    void		(*c_func)(void *); /* routine */
     struct		callout *c_next;
 };
 
 static struct callout *callout = NULL;	/* Callout list */
 static struct timeval timenow;		/* Current time */
-static long uptime_diff = 0;
-static int uptime_diff_set = 0;
-
-static void check_time(void)
-{
-	long new_diff;
-	struct timeval t;
-	struct sysinfo i;
-    struct callout *p;
-	
-	gettimeofday(&t, NULL);
-	sysinfo(&i);
-	new_diff = t.tv_sec - i.uptime;
-	
-	if (!uptime_diff_set) {
-		uptime_diff = new_diff;
-		uptime_diff_set = 1;
-		return;
-	}
-
-	if ((new_diff - 5 > uptime_diff) || (new_diff + 5 < uptime_diff)) {
-		/* system time has changed, update counters and timeouts */
-		info("System time change detected.");
-		start_time.tv_sec += new_diff - uptime_diff;
-		
-    	for (p = callout; p != NULL; p = p->c_next)
-			p->c_time.tv_sec += new_diff - uptime_diff;
-	}
-	uptime_diff = new_diff;
-}
 
 /*
  * timeout - Schedule a timeout.
  */
 void
-timeout(func, arg, secs, usecs)
-    void (*func) __P((void *));
-    void *arg;
-    int secs, usecs;
+timeout(void (*func)(void *), void *arg, int secs, int usecs)
 {
     struct callout *newp, *p, **pp;
 
@@ -1362,7 +1260,7 @@ timeout(func, arg, secs, usecs)
 	fatal("Out of memory in timeout()!");
     newp->c_arg = arg;
     newp->c_func = func;
-    gettimeofday(&timenow, NULL);
+    get_time(&timenow);
     newp->c_time.tv_sec = timenow.tv_sec + secs;
     newp->c_time.tv_usec = timenow.tv_usec + usecs;
     if (newp->c_time.tv_usec >= 1000000) {
@@ -1387,9 +1285,7 @@ timeout(func, arg, secs, usecs)
  * untimeout - Unschedule a timeout.
  */
 void
-untimeout(func, arg)
-    void (*func) __P((void *));
-    void *arg;
+untimeout(void (*func)(void *), void *arg)
 {
     struct callout **copp, *freep;
 
@@ -1409,16 +1305,14 @@ untimeout(func, arg)
  * calltimeout - Call any timeout routines which are now due.
  */
 static void
-calltimeout()
+calltimeout(void)
 {
     struct callout *p;
 
-	check_time();
-	
     while (callout != NULL) {
 	p = callout;
 
-	if (gettimeofday(&timenow, NULL) < 0)
+	if (get_time(&timenow) < 0)
 	    fatal("Failed to get time of day: %m");
 	if (!(p->c_time.tv_sec < timenow.tv_sec
 	      || (p->c_time.tv_sec == timenow.tv_sec
@@ -1437,15 +1331,12 @@ calltimeout()
  * timeleft - return the length of time until the next timeout is due.
  */
 static struct timeval *
-timeleft(tvp)
-    struct timeval *tvp;
+timeleft(struct timeval *tvp)
 {
     if (callout == NULL)
 	return NULL;
 
-    check_time();
-
-    gettimeofday(&timenow, NULL);
+    get_time(&timenow);
     tvp->tv_sec = callout->c_time.tv_sec - timenow.tv_sec;
     tvp->tv_usec = callout->c_time.tv_usec - timenow.tv_usec;
     if (tvp->tv_usec < 0) {
@@ -1464,8 +1355,7 @@ timeleft(tvp)
  * We assume that sig is currently blocked.
  */
 static void
-kill_my_pg(sig)
-    int sig;
+kill_my_pg(int sig)
 {
     struct sigaction act, oldact;
     struct subprocess *chp;
@@ -1511,8 +1401,7 @@ kill_my_pg(sig)
  * signal, we just take the link down.
  */
 static void
-hup(sig)
-    int sig;
+hup(int sig)
 {
     /* can't log a message here, it can deadlock */
     got_sighup = 1;
@@ -1532,8 +1421,7 @@ hup(sig)
  */
 /*ARGSUSED*/
 static void
-term(sig)
-    int sig;
+term(int sig)
 {
     /* can't log a message here, it can deadlock */
     got_sigterm = sig;
@@ -1551,8 +1439,7 @@ term(sig)
  * Sets a flag so we will call reap_kids in the mainline.
  */
 static void
-chld(sig)
-    int sig;
+chld(int sig)
 {
     got_sigchld = 1;
     if (waiting)
@@ -1567,8 +1454,7 @@ chld(sig)
  */
 /*ARGSUSED*/
 static void
-toggle_debug(sig)
-    int sig;
+toggle_debug(int sig)
 {
     debug = !debug;
     if (debug) {
@@ -1586,8 +1472,7 @@ toggle_debug(sig)
  */
 /*ARGSUSED*/
 static void
-open_ccp(sig)
-    int sig;
+open_ccp(int sig)
 {
     got_sigusr2 = 1;
     if (waiting)
@@ -1599,8 +1484,7 @@ open_ccp(sig)
  * bad_signal - We've caught a fatal signal.  Clean up state and exit.
  */
 static void
-bad_signal(sig)
-    int sig;
+bad_signal(int sig)
 {
     static int crashed = 0;
 
@@ -1701,9 +1585,7 @@ safe_fork(int infd, int outfd, int errfd)
 }
 
 static bool
-add_script_env(pos, newstring)
-    int pos;
-    char *newstring;
+add_script_env(int pos, char *newstring)
 {
     if (pos + 1 >= s_env_nalloc) {
 	int new_n = pos + 17;
@@ -1721,8 +1603,7 @@ add_script_env(pos, newstring)
 }
 
 static void
-remove_script_env(pos)
-    int pos;
+remove_script_env(int pos)
 {
     free(script_env[pos] - 1);
     while ((script_env[pos] = script_env[pos + 1]) != NULL)
@@ -1734,7 +1615,7 @@ remove_script_env(pos)
  * and update the system environment.
  */
 static void
-update_system_environment()
+update_system_environment(void)
 {
     struct userenv *uep;
 
@@ -1752,10 +1633,7 @@ update_system_environment()
  * stderr gets connected to the log fd or to the _PATH_CONNERRS file.
  */
 int
-device_script(program, in, out, dont_wait)
-    char *program;
-    int in, out;
-    int dont_wait;
+device_script(char *program, int in, int out, int dont_wait)
 {
     int pid;
     int status = -1;
@@ -1817,7 +1695,7 @@ device_script(program, in, out, dont_wait)
  * script_unsetenv() safely after this routine is run.
  */
 static void
-update_script_environment()
+update_script_environment(void)
 {
     struct userenv *uep;
 
@@ -1858,13 +1736,7 @@ update_script_environment()
  * reap_kids) iff the return value is > 0.
  */
 pid_t
-run_program(prog, args, must_exist, done, arg, wait)
-    char *prog;
-    char **args;
-    int must_exist;
-    void (*done) __P((void *));
-    void *arg;
-    int wait;
+run_program(char *prog, char **args, int must_exist, void (*done)(void *), void *arg, int wait)
 {
     int pid, status;
     struct stat sbuf;
@@ -1935,12 +1807,7 @@ run_program(prog, args, must_exist, done, arg, wait)
  * to use.
  */
 void
-record_child(pid, prog, done, arg, killable)
-    int pid;
-    char *prog;
-    void (*done) __P((void *));
-    void *arg;
-    int killable;
+record_child(int pid, char *prog, void (*done)(void *), void *arg, int killable)
 {
     struct subprocess *chp;
 
@@ -1965,8 +1832,7 @@ record_child(pid, prog, done, arg, killable)
  * exit, send them all a SIGTERM.
  */
 static void
-childwait_end(arg)
-    void *arg;
+childwait_end(void *arg)
 {
     struct subprocess *chp;
 
@@ -1982,8 +1848,7 @@ childwait_end(arg)
  * forget_child - clean up after a dead child
  */
 static void
-forget_child(pid, status)
-    int pid, status;
+forget_child(int pid, int status)
 {
     struct subprocess *chp, **prevp;
 
@@ -2012,7 +1877,7 @@ forget_child(pid, status)
  * and log a message for abnormal terminations.
  */
 static int
-reap_kids()
+reap_kids(void)
 {
     int pid, status;
 
@@ -2034,10 +1899,7 @@ reap_kids()
  * add_notifier - add a new function to be called when something happens.
  */
 void
-add_notifier(notif, func, arg)
-    struct notifier **notif;
-    notify_func func;
-    void *arg;
+add_notifier(struct notifier **notif, notify_func func, void *arg)
 {
     struct notifier *np;
 
@@ -2055,10 +1917,7 @@ add_notifier(notif, func, arg)
  * be called when something happens.
  */
 void
-remove_notifier(notif, func, arg)
-    struct notifier **notif;
-    notify_func func;
-    void *arg;
+remove_notifier(struct notifier **notif, notify_func func, void *arg)
 {
     struct notifier *np;
 
@@ -2075,9 +1934,7 @@ remove_notifier(notif, func, arg)
  * notify - call a set of functions registered with add_notifier.
  */
 void
-notify(notif, val)
-    struct notifier *notif;
-    int val;
+notify(struct notifier *notif, int val)
 {
     struct notifier *np;
 
@@ -2091,8 +1948,7 @@ notify(notif, val)
  * novm - log an error message saying we ran out of memory, and die.
  */
 void
-novm(msg)
-    char *msg;
+novm(char *msg)
 {
     fatal("Virtual memory exhausted allocating %s\n", msg);
 }
@@ -2102,9 +1958,7 @@ novm(msg)
  * for scripts that we run (e.g. ip-up, auth-up, etc.)
  */
 void
-script_setenv(var, value, iskey)
-    char *var, *value;
-    int iskey;
+script_setenv(char *var, char *value, int iskey)
 {
     size_t varl = strlen(var);
     size_t vl = varl + strlen(value) + 2;
@@ -2165,8 +2019,7 @@ script_setenv(var, value, iskey)
  * for scripts.
  */
 void
-script_unsetenv(var)
-    char *var;
+script_unsetenv(char *var)
 {
     int vl = strlen(var);
     int i;
@@ -2200,7 +2053,7 @@ script_unsetenv(var)
  * lock_db - get an exclusive lock on the TDB database.
  * Used to ensure atomicity of various lookup/modify operations.
  */
-void lock_db()
+void lock_db(void)
 {
 #ifdef USE_TDB
 	TDB_DATA key;
@@ -2214,7 +2067,7 @@ void lock_db()
 /*
  * unlock_db - remove the exclusive lock obtained by lock_db.
  */
-void unlock_db()
+void unlock_db(void)
 {
 #ifdef USE_TDB
 	TDB_DATA key;
@@ -2230,7 +2083,7 @@ void unlock_db()
  * update_db_entry - update our entry in the database.
  */
 static void
-update_db_entry()
+update_db_entry(void)
 {
     TDB_DATA key, dbuf;
     int vlen, i;
@@ -2264,8 +2117,7 @@ update_db_entry()
  * add_db_key - add a key that we can use to look up our database entry.
  */
 static void
-add_db_key(str)
-    const char *str;
+add_db_key(const char *str)
 {
     TDB_DATA key, dbuf;
 
@@ -2281,8 +2133,7 @@ add_db_key(str)
  * delete_db_key - delete a key for looking up our database entry.
  */
 static void
-delete_db_key(str)
-    const char *str;
+delete_db_key(const char *str)
 {
     TDB_DATA key;
 
@@ -2295,7 +2146,7 @@ delete_db_key(str)
  * cleanup_db - delete all the entries we put in the database.
  */
 static void
-cleanup_db()
+cleanup_db(void)
 {
     TDB_DATA key;
     int i;

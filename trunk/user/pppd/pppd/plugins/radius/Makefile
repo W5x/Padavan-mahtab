@@ -3,7 +3,11 @@
 # Copyright 2002 Roaring Penguin Software Inc.
 #
 
-DESTDIR = $(INSTROOT)/usr
+CROSS_COMPILE=
+CC=$(CROSS_COMPILE)cc
+COPTS=-O2 -g -pipe
+
+DESTDIR = $(INSTROOT)/usr/local
 MANDIR = $(DESTDIR)/share/man/man8
 LIBDIR = $(DESTDIR)/lib/pppd/$(VERSION)
 
@@ -12,8 +16,7 @@ VERSION = $(shell awk -F '"' '/VERSION/ { print $$2; }' ../../patchlevel.h)
 INSTALL	= install
 
 PLUGIN=radius.so radattr.so radrealms.so
-COPTS=-O2
-CFLAGS=$(COPTS) -I. -I../.. -I../../../include -fPIC -DRC_LOG_FACILITY=LOG_DAEMON
+CFLAGS = $(COPTS) -I. -I../.. -I../../../include -fPIC -DRC_LOG_FACILITY=LOG_DAEMON
 
 # Uncomment the next line to include support for Microsoft's
 # MS-CHAP authentication protocol.
@@ -37,20 +40,20 @@ all: $(PLUGIN)
 
 install: all
 	$(INSTALL) -d -m 755 $(LIBDIR)
-	$(INSTALL) -s -c -m 755 radius.so $(LIBDIR)
-	$(INSTALL) -s -c -m 755 radattr.so $(LIBDIR)
-	$(INSTALL) -s -c -m 755 radrealms.so $(LIBDIR)
+	$(INSTALL) -c -m 755 radius.so $(LIBDIR)
+	$(INSTALL) -c -m 755 radattr.so $(LIBDIR)
+	$(INSTALL) -c -m 755 radrealms.so $(LIBDIR)
 	$(INSTALL) -c -m 444 pppd-radius.8 $(MANDIR)
 	$(INSTALL) -c -m 444 pppd-radattr.8 $(MANDIR)
 
 radius.so: radius.o libradiusclient.a
-	$(CC) -o radius.so -shared $(LDFLAGS) radius.o libradiusclient.a
+	$(CC) $(LDFLAGS) -o radius.so -shared radius.o libradiusclient.a
 
 radattr.so: radattr.o
-	$(CC) -o radattr.so -shared $(LDFLAFS) radattr.o
+	$(CC) $(LDFLAGS) -o radattr.so -shared radattr.o
 
 radrealms.so: radrealms.o
-	$(CC) -o radrealms.so -shared $(LDFLAGS) radrealms.o
+	$(CC) $(LDFLAGS) -o radrealms.so -shared radrealms.o
 
 CLIENTOBJS = avpair.o buildreq.o config.o dict.o ip_util.o \
 	clientid.o sendserver.o lock.o util.o md5.o

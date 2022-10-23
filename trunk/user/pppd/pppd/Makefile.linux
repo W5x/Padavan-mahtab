@@ -39,7 +39,7 @@ LIBS = -lrt
 # Uncomment the next line to include support for Microsoft's
 # MS-CHAP authentication protocol.  Also, edit plugins/radius/Makefile.linux.
 CHAPMS=y
-#USE_CRYPT=y
+USE_CRYPT=y
 # Don't use MSLANMAN unless you really know what you're doing.
 #MSLANMAN=y
 # Uncomment the next line to include support for MPPE.  CHAPMS (above) must
@@ -49,26 +49,26 @@ MPPE=y
 # Uncomment the next line to include support for PPP packet filtering.
 # This requires that the libpcap library and headers be installed
 # and that the kernel driver support PPP packet filtering.
-FILTER=y
+#FILTER=y
 
 # Uncomment the next line to enable multilink PPP (enabled by default)
 # Linux distributions: Please leave multilink ENABLED in your builds
 # of pppd!
-HAVE_MULTILINK=y
+#HAVE_MULTILINK=y
 
 # Uncomment the next line to enable the TDB database (enabled by default.)
 # If you enable multilink, then TDB is automatically enabled also.
 # Linux distributions: Please leave TDB ENABLED in your builds.
-USE_TDB=y
+#USE_TDB=y
 
 # Uncomment the next line to enable Type=notify services in systemd
 # If enabled, and the user sets the up_sdnotify option, then
 # pppd will not detach and will notify systemd when up.
 #SYSTEMD=y
 
-HAS_SHADOW=y
+#HAS_SHADOW=y
 #USE_PAM=y
-HAVE_INET6=y
+#HAVE_INET6=y
 
 # Enable plugins
 PLUGIN=y
@@ -81,13 +81,13 @@ PLUGIN=y
 
 # Use libutil; test if logwtmp is declared in <utmp.h> to detect
 ifeq ($(shell echo '\#include <utmp.h>' | $(CC) -E - 2>/dev/null | grep -q logwtmp && echo yes),yes)
-USE_LIBUTIL=y
+#USE_LIBUTIL=y
 endif
 
 # Enable EAP-TLS authentication (requires MPPE support, libssl and libcrypto)
-USE_EAPTLS=y
+#USE_EAPTLS=y
 
-MAXOCTETS=y
+#MAXOCTETS=y
 
 INCLUDE_DIRS= -I../include
 

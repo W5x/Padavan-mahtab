@@ -14,7 +14,7 @@ INSTALL	= install
 # EAP-TLS
 #CFLAGS += -DUSE_EAPTLS=1
 
-SUBDIRS := rp-pppoe pppol2tp
+SUBDIRS := pppoe pppol2tp
 # Uncomment the next line to include the radius authentication plugin
 #SUBDIRS += pppoatm
 #SUBDIRS += radius

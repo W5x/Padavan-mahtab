@@ -59,7 +59,7 @@ MPPE=y
 # Uncomment the next line to enable the TDB database (enabled by default.)
 # If you enable multilink, then TDB is automatically enabled also.
 # Linux distributions: Please leave TDB ENABLED in your builds.
-#USE_TDB=y
+USE_TDB=y
 
 # Uncomment the next line to enable Type=notify services in systemd
 # If enabled, and the user sets the up_sdnotify option, then
@@ -81,13 +81,13 @@ PLUGIN=y
 
 # Use libutil; test if logwtmp is declared in <utmp.h> to detect
 ifeq ($(shell echo '\#include <utmp.h>' | $(CC) -E - 2>/dev/null | grep -q logwtmp && echo yes),yes)
-#USE_LIBUTIL=y
+USE_LIBUTIL=y
 endif
 
 # Enable EAP-TLS authentication (requires MPPE support, libssl and libcrypto)
 #USE_EAPTLS=y
 
-#MAXOCTETS=y
+MAXOCTETS=y
 
 INCLUDE_DIRS= -I../include
 

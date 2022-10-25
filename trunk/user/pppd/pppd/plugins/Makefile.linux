@@ -12,12 +12,11 @@ LDFLAGS_SHARED	= -shared
 INSTALL	= install
 
 # EAP-TLS
-#CFLAGS += -DUSE_EAPTLS=1
+CFLAGS += -DUSE_EAPTLS=1
 
-SUBDIRS := pppoe pppol2tp
+SUBDIRS := pppoe pppoatm pppol2tp
 # Uncomment the next line to include the radius authentication plugin
-#SUBDIRS += pppoatm
-#SUBDIRS += radius
+SUBDIRS += radius
 PLUGINS := minconn.so passprompt.so passwordfd.so winbind.so
 
 # This setting should match the one in ../Makefile.linux

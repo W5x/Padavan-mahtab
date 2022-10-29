@@ -165,7 +165,8 @@ HEADERS += pppcrypt.h
 endif
 
 ifdef NEEDCRYPTOLIB
-LIBS     += -lcrypto
+#LIBS     += -lcrypto
+LIBS     += -ldes $(LIBS)
 endif
 
 # For "Pluggable Authentication Modules", see ftp.redhat.com:/pub/pam/.

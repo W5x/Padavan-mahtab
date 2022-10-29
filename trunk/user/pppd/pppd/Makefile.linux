@@ -140,7 +140,7 @@ endif
 
 ifdef HAS_SHADOW
 CFLAGS   += -DHAS_SHADOW
-#LIBS     += -lshadow $(LIBS)
+LIBS     += -lshadow $(LIBS)
 endif
 
 ifeq ($(shell echo '\#include <crypt.h>' | $(CC) -E - >/dev/null 2>&1 && echo yes),yes)
@@ -166,7 +166,7 @@ endif
 
 ifdef NEEDCRYPTOLIB
 #LIBS     += -lcrypto
-LIBS     += -ldes $(LIBS)
+LIBS     += -ldes $(LIBS) -lcrypto
 endif
 
 # For "Pluggable Authentication Modules", see ftp.redhat.com:/pub/pam/.

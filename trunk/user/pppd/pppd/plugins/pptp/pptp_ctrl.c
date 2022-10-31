@@ -59,7 +59,7 @@ struct PPTP_CONN {
     int inet_sock;
     /* Connection States */
     enum {
-        CONN_IDLE, CONN_WAIT_CTL_REPLY, CONN_WAIT_STOP_REPLY, CONN_ESTABLISHED
+        CONN_IDLE, CONN_WAIT_CTL_REPLY, CONN_WAIT_STOP_REPLY, CONN_ESTABLISHED, CONN_DEAD
     } conn_state; /* on startup: CONN_IDLE */
     /* Keep-alive states */
     enum {
@@ -324,7 +324,11 @@ PPTP_CONN *pptp_conn_open(int inet_sock, int isclient, pptp_conn_cb callback) {
 }
 
 int pptp_conn_established(PPTP_CONN *conn) {
-    return (conn->conn_state == CONN_ESTABLISHED);
+  return (conn->conn_state == CONN_ESTABLISHED);
+}
+
+int pptp_conn_dead(PPTP_CONN *conn) {
+  return (conn->conn_state == CONN_DEAD);
 }
 
 /* This currently *only* works for client call requests.
@@ -443,8 +447,9 @@ void pptp_conn_close(PPTP_CONN *conn, u_int8_t close_reason) {
 /*** this is a hard close *****************************************************/
 void pptp_conn_destroy(PPTP_CONN *conn) {
     int i;
-    assert(conn != NULL);
-    assert(conn->call != NULL);
+    assert(conn && conn->call);
+    if (pptp_conn_dead(conn))
+        return;
     /* destroy all open calls */
     for (i = 0; i < vector_size(conn->call); i++)
         pptp_call_destroy(conn, vector_get_Nth(conn->call, i));
@@ -454,6 +459,12 @@ void pptp_conn_destroy(PPTP_CONN *conn) {
     close(conn->inet_sock);
     /* deallocate */
     vector_destroy(conn->call);
+    conn->conn_state = CONN_DEAD;
+}
+
+void pptp_conn_free(PPTP_CONN * conn)
+{
+    assert(conn != NULL);
     free(conn);
 }
 
@@ -1025,15 +1036,20 @@ static void pptp_reset_timer(void) {
 
 
 /*** Handle keep-alive timer **************************************************/
-static void pptp_handle_timer() {
+static void pptp_handle_timer()
+{
     int i;
     /* "Keep Alives and Timers, 1": check connection state */
     if (global.conn->conn_state != CONN_ESTABLISHED) {
-        if (global.conn->conn_state == CONN_WAIT_STOP_REPLY)
+        if (pptp_conn_dead(global.conn))
+            return;
+        if (global.conn->conn_state == CONN_WAIT_STOP_REPLY) {
             /* hard close. */
             pptp_conn_destroy(global.conn);
-        else /* soft close */
-            pptp_conn_close(global.conn, PPTP_STOP_NONE);
+            return;
+        }
+        /* soft close */
+        pptp_conn_close(global.conn, PPTP_STOP_NONE);
     }
     /* "Keep Alives and Timers, 2": check echo status */
     if (global.conn->ka_state == KA_OUTSTANDING) {
@@ -1068,3 +1084,5 @@ static void pptp_handle_timer() {
     }
     pptp_reset_timer();
 }
+
+

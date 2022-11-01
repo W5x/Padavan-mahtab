@@ -762,7 +762,7 @@ discovery(PPPoEConnection *conn)
     if (conn->skipDiscovery) {
 	conn->discoveryState = STATE_SESSION;
 	if (conn->killSession) {
-	    sendPADT(conn, "RP-PPPoE: Session killed manually");
+	    sendPADT(conn, "PPPoE: Session killed manually");
 	    exit(0);
 	}
 	return;

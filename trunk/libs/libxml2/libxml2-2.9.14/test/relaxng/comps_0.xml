@@ -170,7 +170,7 @@
       <packagereq type="default">rdate</packagereq>
       <packagereq type="mandatory">redhat-logos</packagereq>
       <packagereq type="default">reiserfs-utils</packagereq>
-      <packagereq type="default">rp-pppoe</packagereq>
+      <packagereq type="default">pppoe</packagereq>
       <packagereq type="default">rsh</packagereq>
       <packagereq type="mandatory">rsync</packagereq>
       <packagereq type="default">jfsutils</packagereq>
@@ -10135,7 +10135,7 @@
     </dependencylist>
   </package>
   <package>
-    <name>rp-pppoe</name>
+    <name>pppoe</name>
     <dependencylist>
       <dependency>chkconfig</dependency>
       <dependency>initscripts</dependency>

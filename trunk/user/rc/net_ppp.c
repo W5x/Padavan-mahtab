@@ -319,7 +319,7 @@ launch_wan_pppd(int unit, int wan_proto)
 		mtu = get_wan_unit_value_int(unit, "pppoe_mtu");
 		mru = get_wan_unit_value_int(unit, "pppoe_mru");
 		
-		fprintf(fp, "plugin rp-pppoe.so\n");
+		fprintf(fp, "plugin pppoe.so\n");
 		fprintf(fp, "nic-%s\n", get_man_ifname(unit));
 		
 		pppoe_ac = get_wan_unit_value(unit, "pppoe_ac");

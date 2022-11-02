@@ -87,7 +87,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <netinet/in.h>]], [[
     # We'll just have to try and use struct ip_mreq
     AC_MSG_RESULT(no)
     AC_MSG_CHECKING(for struct ip_mreq)
-    _au_m4_changequote([,])AC_TRY_COMPILE([#include <netinet/in.h>], [
+    AC_TRY_COMPILE([#include <netinet/in.h>], [
         struct ip_mreq mreq;
         mreq.imr_interface.s_addr = 0;
     ], [

@@ -4,8 +4,8 @@ SRC_URL=https://github.com/OpenVPN/openvpn/archive/v2.5.8.tar.gz
 CFLAGS += -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections
 
-all: download_test extract_test config_test
-#all: config_test
+#all: download_test extract_test config_test
+all: config_test
 	$(MAKE) -j$(HOST_NCPU) -C $(SRC_NAME)
 
 download_test:

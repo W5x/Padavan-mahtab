@@ -1,0 +1,27 @@
+Subject: Fix a typo in the pptpd manpage
+Author: Christoph Biedl <debian.axhn@manchmal.in-ulm.de>
+Date: Sun, 03 Jul 2016 17:48:14 +0200
+Forwarded: no
+
+--- a/pptpd.c
++++ b/pptpd.c
+@@ -88,7 +88,7 @@
+         printf("Usage: pptpd [options], where options are:\n\n");
+ #ifdef BCRELAY
+ #define OPT_BCRELAY "b"
+-        printf(" [-b] [--bcrelay if]       Use broadcast relay for broadcasts comming from.\n");
++        printf(" [-b] [--bcrelay if]       Use broadcast relay for broadcasts coming from.\n");
+         printf("                           the specified interface (default is eth1).\n");
+ #else
+ #define OPT_BCRELAY ""
+--- a/ctrlpacket.c
++++ b/ctrlpacket.c
+@@ -319,7 +319,7 @@
+         /* Packet sanity check on magic cookie */
+         if (ntohl(header->magic) != PPTP_MAGIC_COOKIE) {
+                 /* Oops! Not a valid Control Message */
+-                syslog(LOG_ERR, "CTRL: Bad magic cookie - lost syncronization, closing control connection.");
++                syslog(LOG_ERR, "CTRL: Bad magic cookie - lost synchronization, closing control connection.");
+                 /* draft states loss of syncronization must result in
+                  * immediate closing of the control connection
+                  */

@@ -1,0 +1,18 @@
+Subject: Don't install files as root
+Author: Christoph Biedl <debian.axhn@manchmal.in-ulm.de>
+Date: 2020-12-26
+Forwarded: no
+
+    Not needed in Debian, breaks Rules-Requires-Root: no
+
+--- a/plugins/Makefile
++++ b/plugins/Makefile
+@@ -4,7 +4,7 @@
+ CPPFLAGS	= $(shell dpkg-buildflags --get CPPFLAGS)
+ LDFLAGS	= $(shell dpkg-buildflags --get LDFLAGS) -shared
+ LDADD   = -lutil
+-INSTALL	= install -o root
++INSTALL	= install
+ prefix  = /usr/local
+ 
+ PLUGINS = pptpd-logwtmp.so

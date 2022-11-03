@@ -1,8 +1,33 @@
-pptpd for DEBIAN
-----------------------
+IP forwarding
+-------------
+Please note: If you want to use pptpd to create host-to-site tunnels
+(e.g. typical road-warrior setups), then you will need to enable IP
+forwarding. This can be done by un-commenting
 
-Please note that, if you want to use pptpd to create host-to-site tunnels (e.g.
-typical road-warrior setups), then you will need to enable IP forwarding. This
-can be done by setting ip_forward=yes in /etc/network/options.
+    net.ipv4.ip_forward=1
 
-Rene Mayrhofer <rene.mayrhofer@gibraltar.at>, Mon, 16 Aug 1999 11:27:43 +0200
+in /etc/sysctl.conf.
+
+
+Daemon disabled by default
+--------------------------
+A manual configuration is required before pptpd is usable. Therefore
+the daemon is not started by default. Edit /etc/pptpd.conf and probably
+alos /etc/ppp/pptpd-options, then issue "systemctl enable pptpd".
+
+
+Support for non-Linux
+---------------------
+For the time being, pptpd is restricted to Linux only. Patches to
+re-enable support for other platforms are welcome.
+
+Issues on kfreebsd:
+
+* bcrelay does not compile. Workaround: Disable bcrelay
+* There's no pppd here but freebsd-ppp instead. Appearently it has a
+  completely different parameter usage.
+
+Issues on hurd:
+
+* bcrelay does not compile. Workaround: Disable bcrelay
+* No ppp at all.

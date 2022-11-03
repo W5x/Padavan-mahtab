@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+dpkg-maintscript-helper mv_conffile \
+    /etc/modprobe.d/pptpd.conf \
+    /etc/modules-load.d/pptpd.conf \
+    1.4.0-9~ \
+    -- "$@"
+
+#DEBHELPER#
+exit 0

@@ -1,0 +1,3 @@
+
+# side effect of teardown, see https://bugs.debian.org/700868
+pptpd: init.d-script-possible-missing-stop etc/init.d/pptpd 0 6

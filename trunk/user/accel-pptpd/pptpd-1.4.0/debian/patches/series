@@ -1,0 +1,13 @@
+# cherry-picked commits. Keep in chronlogical order
+cherry-pick.1.4.0-10-g6adffc1.bcrelay-fix-typo.patch
+cherry-pick.1.4.0-11-g4ea2db6.ff.bcrelay-c-replace-sprintf-with-snprintf.patch
+cherry-pick.1.4.0-14-gb84360b.pptpctrl-exit-when-bailing.patch
+cherry-pick.1.4.0-16-g0c0ad67.check-for-remote-ip-duplicates-in-pptpd-conf.patch
+cherry-pick.1.4.0-18-gd7b9552.fix-segfault-in-pptpctrl-argument-parser.patch
+cherry-pick.1.4.0-20-g4da603d.propagate-cc-to-subdirectories.patch
+
+# local modifications
+local.build_hardening-flags.patch
+local.build_plugin.patch
+local.fix-typos.patch
+local.install-nonroot.patch

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+set -e
+
+dpkg-maintscript-helper mv_conffile \
+    /etc/modprobe.d/pptpd.conf \
+    /etc/modules-load.d/pptpd.conf \
+    1.4.0-9~ \
+    -- "$@"
+
+case "$1" in
+configure)
+    # load the module configured in /etc/modules-load.d/pptpd.conf
+    if [ -d /run/systemd/system ] ; then
+        deb-systemd-invoke restart systemd-modules-load.service
+    else
+        modprobe nf_nat_pptp 2>/dev/null || true
+    fi
+    ;;
+abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+*)
+    echo "postinst called with unknown argument '$1'"
+    exit 1
+    ;;
+esac
+
+#DEBHELPER#
+exit 0

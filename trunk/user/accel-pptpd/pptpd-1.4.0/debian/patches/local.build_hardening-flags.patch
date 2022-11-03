@@ -1,0 +1,39 @@
+Subject: Enable hardened build flags
+Author: Christoph Biedl <debian.axhn@manchmal.in-ulm.de>
+Bug-Debian: https://bugs.debian.org/656650
+Forwarded: not-needed
+Last-Update: 2015-12-04
+
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -11,7 +11,7 @@
+ ##  warning with -Wmissing-prototypes).
+ ## -Wmissing-prototypes removed (eg, Linux 2.2.6 headers
+ ##  aren't up to it).
+-CFLAGS = -O2 -fno-builtin -Wall -DSBINDIR='"$(sbindir)"'
++CFLAGS = $(shell dpkg-buildflags --get CFLAGS) -O2 -fno-builtin -Wall -DSBINDIR='"$(sbindir)"'
+ #CFLAGS = -O2 -fno-builtin -Wall -ansi -DSBINDIR='"$(sbindir)"'
+ #CFLAGS = -O2 -fno-builtin -Wall -ansi -pedantic -Wmissing-prototypes -Werror -DSBINDIR='"$(sbindir)"'
+ 
+--- a/plugins/Makefile
++++ b/plugins/Makefile
+@@ -1,7 +1,8 @@
+ CC	= gcc
+ COPTS	= -O2 -g
+-CFLAGS	= $(COPTS) -I.. -I../../include -fPIC
+-LDFLAGS	= -shared
++CFLAGS	= $(shell dpkg-buildflags --get CFLAGS) $(COPTS) -I.. -I../../include -fPIC
++CPPFLAGS	= $(shell dpkg-buildflags --get CPPFLAGS)
++LDFLAGS	= $(shell dpkg-buildflags --get LDFLAGS) -shared
+ LDADD   = -lutil
+ INSTALL	= install -o root
+ prefix  = /usr/local
+@@ -16,7 +17,7 @@
+ all:	$(PLUGINS)
+ 
+ %.so: %.c
+-	$(CC) -o $@ $(LDFLAGS) $(CFLAGS) $^ $(LDADD)
++	$(CC) -o $@ $(LDFLAGS) $(CPPFLAGS) $(CFLAGS) $^ $(LDADD)
+ 
+ LIBDIR	?= $(DESTDIR)$(prefix)/lib/pptpd
+ 

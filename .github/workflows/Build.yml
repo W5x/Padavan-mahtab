@@ -33,7 +33,7 @@ jobs:
              
       - name: Prepare toolchain
         run: |
-          cd toolchain-mipsel
+          cd toolchain
           sh dl_toolchain.sh
         
       - name: Start build

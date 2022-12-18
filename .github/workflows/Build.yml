@@ -30,12 +30,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install libtool-bin gperf python3-docutils autopoint gettext
-        
-      - name: Run shellcheck
-        run: |
-          cp -r scripts/. trunk/
-          sh ./trunk/tools/shellcheck.sh
-        
+             
       - name: Prepare toolchain
         run: |
           cd toolchain-mipsel

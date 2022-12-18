@@ -1,0 +1,75 @@
+name: Build
+
+on: 
+  repository_dispatch:
+  workflow_dispatch:
+  #schedule:
+    #- cron: 0 23 * * 5
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-20.04
+    #if: github.repository_owner=='a0575'
+    env:
+      build_variant: ${{ matrix.build_variant }}
+      targets: ${{ matrix.targets }}
+      images_dir: /opt/images
+    strategy:
+      matrix:
+        include:
+          - build_variant: "A4"
+            targets: "A3004NS"
+          
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@master
+      
+      - name: Prepare environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install libtool-bin gperf python3-docutils autopoint gettext
+        
+      - name: Run shellcheck
+        run: |
+          cp -r scripts/. trunk/
+          sh ./trunk/tools/shellcheck.sh
+        
+      - name: Prepare toolchain
+        run: |
+          cd toolchain-mipsel
+          sh dl_toolchain.sh
+        
+      - name: Start build
+        run: |
+          cd trunk
+          mkdir -p ${images_dir}
+          for m in $targets; do fakeroot ./build_firmware_ci $m; \
+          if [ $? = 0 ]; then cp -f images/*.trx ${images_dir}/$m.trx; else exit 1; fi; \
+            ./clear_tree_simple >/dev/null 2>&1; done
+            
+      - name: Create archive
+        if: ${{ github.event_name != 'release' && success() }}
+        run: |
+          GIT_VERSION=`git rev-parse --short=7 HEAD 2>/dev/null` && [ -n "$GIT_VERSION" ] && \
+          image_name=images_${build_variant}_${GIT_VERSION} || image_name=images_${build_variant}
+          cd /opt/images; md5sum *.trx |tee md5sum.txt; 7z a -mx=9 ${image_name}.7z ./*
+          echo "image_name=${image_name}" >> $GITHUB_ENV
+          
+      - name: Generate release tag
+        id: tag
+        run: |
+          echo "::set-output name=release_tag::padavan_$(date +%Y-%m-%d)"
+          touch release.txt
+          echo "::set-output name=status::success"
+        
+      - name: Upload firmware to release
+        uses: softprops/action-gh-release@v1
+        if: steps.tag.outputs.status == 'success' && !cancelled()
+        env:
+          GITHUB_TOKEN: ${{ secrets.workflow_token }}
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          body_path: release.txt
+          files: /opt/images/*.trx
